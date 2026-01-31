@@ -130,11 +130,11 @@ export default function Rooms() {
                     <h3 className="text-2xl font-bold text-white">{room.roomNumber}</h3>
                     <p className="text-slate-400">{room.type}</p>
                   </div>
-                  <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => setEditingRoom(room)}>
+                  <div className="px-6 py-4 bg-white/5 border-t border-white/10 flex justify-end gap-2">
+                    <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white hover:bg-white/10" onClick={() => setEditingRoom(room)}>
                       <Pencil className="w-4 h-4 mr-1" /> Edit
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setDeletingId(room.id)}>
+                    <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-500/10" onClick={() => setDeletingId(room.id)}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
