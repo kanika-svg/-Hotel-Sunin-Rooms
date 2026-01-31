@@ -72,6 +72,7 @@ export function BookingForm({ bookingId, initialData, onSuccess, onCancel }: Boo
       const formattedData = {
         ...data,
         notes: data.notes || null,
+        roomId: Number(data.roomId),
       };
       if (isEditing) {
         await updateBooking.mutateAsync({ id: bookingId, ...formattedData });

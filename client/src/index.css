@@ -89,6 +89,16 @@
   animation: animate-in 0.5s ease-out forwards;
 }
 
+.bg-hotel-fade {
+  background-image: url('@assets/IMG_2038_1769872631691.JPG');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  opacity: 0.05;
+  filter: grayscale(100%);
+  pointer-events: none;
+}
+
 @keyframes animate-in {
   from {
     opacity: 0;

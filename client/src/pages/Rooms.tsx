@@ -71,16 +71,14 @@ export default function Rooms() {
       b.status !== 'checked out'
     );
 
-    if (activeBooking) {
-      return activeBooking.status;
-    }
-    return null;
+    return activeBooking || null;
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50 relative overflow-hidden">
+      <div className="absolute inset-0 bg-hotel-fade z-0" />
       <Sidebar />
-      <main className="flex-1 ml-64 p-8 animate-in">
+      <main className="flex-1 ml-64 p-8 animate-in relative z-10">
         <header className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-display font-bold text-slate-900">Rooms</h1>
@@ -98,22 +96,28 @@ export default function Rooms() {
             <p className="col-span-full text-center py-12 text-muted-foreground">No rooms found. Add one to get started.</p>
           ) : (
             rooms?.map((room) => {
-              const bookingStatus = getRoomBookingStatus(room.id);
+              const activeBooking = getRoomBookingStatus(room.id);
+              const bookingStatus = activeBooking?.status;
+              const displayStatus = bookingStatus === 'checked in' ? 'Occupied' : room.status;
+
               return (
-                <div key={room.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden group hover:shadow-md transition-all">
+                <div key={room.id} className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-slate-200 overflow-hidden group hover:shadow-md transition-all">
                   <div className="p-6">
                     <div className="flex justify-between items-start mb-4">
                       <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
                         < BedDouble className="w-6 h-6" />
                       </div>
                       <div className="flex flex-col items-end gap-1">
-                        <Badge variant={room.status === 'Available' ? 'default' : 'destructive'} className={room.status === 'Available' ? 'bg-green-100 text-green-700 hover:bg-green-200 shadow-none capitalize' : 'capitalize'}>
-                          {room.status}
+                        <Badge variant={displayStatus === 'Available' ? 'default' : 'destructive'} className={cn(
+                          "capitalize",
+                          displayStatus === 'Available' ? 'bg-green-100 text-green-700 hover:bg-green-200 shadow-none' : 
+                          displayStatus === 'Occupied' ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 shadow-none' : ''
+                        )}>
+                          {displayStatus}
                         </Badge>
-                        {bookingStatus && (
+                        {bookingStatus && bookingStatus !== 'checked in' && (
                           <Badge variant="outline" className={cn(
                             "capitalize",
-                            bookingStatus === 'checked in' ? "border-blue-200 bg-blue-50 text-blue-700" :
                             bookingStatus === 'reserved' ? "border-amber-200 bg-amber-50 text-amber-700" :
                             "border-slate-200 bg-slate-50 text-slate-700"
                           )}>
