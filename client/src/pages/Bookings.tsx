@@ -64,9 +64,10 @@ export default function Bookings() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50 relative overflow-hidden">
+      <div className="absolute inset-0 bg-hotel-fade z-0" />
       <Sidebar />
-      <main className="flex-1 ml-64 p-8 animate-in">
+      <main className="flex-1 ml-64 p-8 animate-in relative z-10">
         <header className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-display font-bold text-slate-900">Bookings</h1>

@@ -18,9 +18,10 @@ export default function Calendar() {
   const handleNext = () => setStartDate(addDays(startDate, 7));
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50 relative overflow-hidden">
+      <div className="absolute inset-0 bg-hotel-fade z-0" />
       <Sidebar />
-      <main className="flex-1 ml-64 flex flex-col h-screen overflow-hidden">
+      <main className="flex-1 ml-64 flex flex-col h-screen overflow-hidden relative z-10">
         <header className="flex justify-between items-center p-8 border-b border-slate-200 bg-white">
           <div>
             <h1 className="text-3xl font-display font-bold text-slate-900">Calendar</h1>
