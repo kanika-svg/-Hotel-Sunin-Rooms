@@ -80,11 +80,16 @@ export async function registerRoutes(
 
   app.post(api.bookings.create.path, async (req, res) => {
     try {
-      const input = api.bookings.create.input.parse(req.body);
+      // Coerce dates before validation if they are strings
+      const body = { ...req.body };
+      if (typeof body.checkIn === 'string') body.checkIn = new Date(body.checkIn);
+      if (typeof body.checkOut === 'string') body.checkOut = new Date(body.checkOut);
+
+      const input = api.bookings.create.input.parse(body);
       
       // Business Logic: Check Availability
-      const checkIn = new Date(input.checkIn);
-      const checkOut = new Date(input.checkOut);
+      const checkIn = input.checkIn;
+      const checkOut = input.checkOut;
       
       if (checkOut <= checkIn) {
          return res.status(400).json({ message: "Check-out must be after check-in" });
@@ -117,7 +122,13 @@ export async function registerRoutes(
   app.put(api.bookings.update.path, async (req, res) => {
     try {
       const id = Number(req.params.id);
-      const input = api.bookings.update.input.parse(req.body);
+      
+      // Coerce dates before validation if they are strings
+      const body = { ...req.body };
+      if (typeof body.checkIn === 'string') body.checkIn = new Date(body.checkIn);
+      if (typeof body.checkOut === 'string') body.checkOut = new Date(body.checkOut);
+
+      const input = api.bookings.update.input.parse(body);
       const existing = await storage.getBooking(id);
       
       if (!existing) {
