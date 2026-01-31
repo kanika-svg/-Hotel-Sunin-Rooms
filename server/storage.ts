@@ -57,11 +57,8 @@ export class DatabaseStorage implements IStorage {
 
   // === BOOKINGS ===
   async getBookings(params?: { from?: Date; to?: Date; roomId?: number }): Promise<(Booking & { room: Room })[]> {
-    let query = db
-      .select({
-        ...bookings, // Spread all booking fields
-        room: rooms, // Include the full room object
-      })
+    const query = db
+      .select()
       .from(bookings)
       .innerJoin(rooms, eq(bookings.roomId, rooms.id));
 
@@ -80,29 +77,23 @@ export class DatabaseStorage implements IStorage {
       );
     }
 
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions)) as any;
-    }
-
-    const results = await query.orderBy(bookings.checkIn);
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const results = await (whereClause ? query.where(whereClause) : query).orderBy(bookings.checkIn);
     
     // Transform result to match expected type structure: Booking & { room: Room }
-    return results as (Booking & { room: Room })[];
+    return results.map(r => ({ ...r.bookings, room: r.rooms }));
   }
 
   async getBooking(id: number): Promise<(Booking & { room: Room }) | undefined> {
     const result = await db
-      .select({
-        ...bookings,
-        room: rooms,
-      })
+      .select()
       .from(bookings)
       .innerJoin(rooms, eq(bookings.roomId, rooms.id))
       .where(eq(bookings.id, id));
     
     if (result.length === 0) return undefined;
     
-    return result[0] as (Booking & { room: Room });
+    return { ...result[0].bookings, room: result[0].rooms };
   }
 
   async createBooking(booking: InsertBooking): Promise<Booking> {

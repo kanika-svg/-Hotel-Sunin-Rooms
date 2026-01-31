@@ -41,7 +41,7 @@ type FormData = z.infer<typeof formSchema>;
 
 interface BookingFormProps {
   bookingId?: number;
-  initialData?: Partial<FormData>;
+  initialData?: any;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -269,6 +269,7 @@ export function BookingForm({ bookingId, initialData, onSuccess, onCancel }: Boo
                   placeholder="Special requests, allergies, etc."
                   className="resize-none"
                   {...field}
+                  value={field.value || ""}
                 />
               </FormControl>
               <FormMessage />

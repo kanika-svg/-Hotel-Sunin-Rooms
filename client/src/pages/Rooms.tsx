@@ -255,6 +255,7 @@ function RoomDialog({ open, onOpenChange, initialData }: { open: boolean; onOpen
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="Available">Available</SelectItem>
+                      <SelectItem value="Occupied">Occupied</SelectItem>
                       <SelectItem value="Maintenance">Maintenance</SelectItem>
                     </SelectContent>
                   </Select>

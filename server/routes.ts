@@ -95,7 +95,13 @@ export async function registerRoutes(
         return res.status(409).json({ message: "Room is already booked for these dates" });
       }
 
-      const booking = await storage.createBooking(input);
+      const bookingData = {
+        ...input,
+        checkIn,
+        checkOut
+      };
+
+      const booking = await storage.createBooking(bookingData as any);
       res.status(201).json(booking);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -132,7 +138,13 @@ export async function registerRoutes(
         return res.status(409).json({ message: "Room is already booked for these dates" });
       }
 
-      const updated = await storage.updateBooking(id, input);
+      const updateData = {
+        ...input,
+        checkIn,
+        checkOut
+      };
+
+      const updated = await storage.updateBooking(id, updateData as any);
       res.json(updated);
     } catch (err) {
       if (err instanceof z.ZodError) {
