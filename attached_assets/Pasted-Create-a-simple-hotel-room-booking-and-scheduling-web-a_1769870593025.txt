@@ -1,0 +1,166 @@
+Create a simple hotel room booking and scheduling web application for a small hotel owner who currently uses Excel and wants to replace it.
+
+The app must be simple, clean, and easy to use on both desktop and mobile browser.
+
+Main Goal
+
+Allow the hotel owner to:
+
+See all rooms
+
+Add bookings
+
+View current bookings
+
+Prevent double booking
+
+Delete or edit bookings
+
+User Type
+
+Single user (hotel owner or staff). No complex multi-user system needed for version 1.
+
+Core Features
+
+Room Management
+Preload rooms in the system: Fields:
+
+Room Number
+
+Room Type (Standard, Deluxe, VIP)
+
+Status (Available / Maintenance)
+
+Owner can:
+
+Add room
+
+Edit room
+
+Delete room
+
+Booking Management
+Booking must include:
+
+Guest Name
+
+Phone Number
+
+Room Number (Dropdown from room list)
+
+Check-in Date
+
+Check-out Date
+
+Notes (optional)
+
+System must:
+
+Prevent double booking for same room and dates
+
+Show warning if room already booked
+
+Dashboard / Main Screen
+Show:
+
+Today’s bookings
+
+Upcoming check-ins
+
+Upcoming check-outs
+
+Total occupied rooms today
+
+Calendar or Schedule View
+Simple calendar or timeline showing:
+
+Rooms vs Dates
+
+Booked dates highlighted
+
+Booking List Page
+Table showing:
+
+Guest Name
+
+Room
+
+Check-in
+
+Check-out
+
+Phone
+
+Actions (Edit / Delete)
+
+Design Requirements
+
+Clean hotel management style UI
+
+Simple colors (white, blue, or neutral)
+
+Large buttons (touch friendly)
+
+Fast loading
+
+Technical Requirements
+
+Web-based application
+
+Cloud database preferred
+
+Simple deployment
+
+Beginner-friendly code structure
+
+Data Structure Example
+
+Rooms Table:
+
+id
+
+roomNumber
+
+roomType
+
+status
+
+Bookings Table:
+
+id
+
+guestName
+
+phone
+
+roomNumber
+
+checkInDate
+
+checkOutDate
+
+notes
+
+createdAt
+
+Smart Logic Rules
+
+Cannot create booking if dates overlap existing booking for same room
+
+Check-out date must be after check-in date
+
+Auto mark room occupied during booking dates
+
+Nice To Have (If Easy)
+
+Search booking by guest name or phone
+
+Filter bookings by date
+
+Export bookings to CSV
+
+Priority
+
+Focus on working booking system first. Keep UI simple but professional.
+
+7 hours ago
