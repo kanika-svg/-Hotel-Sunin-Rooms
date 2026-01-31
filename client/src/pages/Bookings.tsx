@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Trash2, Pencil, Calendar } from "lucide-react";
+import { Plus, Search, Trash2, Pencil, Calendar, Download } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 
@@ -63,6 +63,32 @@ export default function Bookings() {
     return "Confirmed";
   };
 
+  const exportToCSV = () => {
+    if (!bookings || bookings.length === 0) return;
+
+    const headers = ["Guest Name", "Phone", "Room Number", "Room Type", "Check-in", "Check-out", "Status", "Notes"];
+    const csvRows = bookings.map(b => [
+      `"${b.guestName}"`,
+      `"${b.phone}"`,
+      `"${b.room?.roomNumber}"`,
+      `"${b.room?.type}"`,
+      `"${format(new Date(b.checkIn), 'yyyy-MM-dd')}"`,
+      `"${format(new Date(b.checkOut), 'yyyy-MM-dd')}"`,
+      `"${b.status}"`,
+      `"${b.notes || ''}"`
+    ].join(","));
+
+    const csvContent = [headers.join(","), ...csvRows].join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `bookings_export_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="flex min-h-screen bg-slate-50 relative overflow-hidden">
       <div className="absolute inset-0 bg-hotel-fade z-0" />
@@ -73,9 +99,14 @@ export default function Bookings() {
             <h1 className="text-3xl font-display font-bold text-slate-900">Bookings</h1>
             <p className="text-slate-500 mt-1">Manage guest reservations and check-ins.</p>
           </div>
-          <Button onClick={() => setIsCreateOpen(true)} className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
-            <Plus className="w-4 h-4 mr-2" /> New Booking
-          </Button>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={exportToCSV} disabled={!bookings?.length}>
+              <Download className="w-4 h-4 mr-2" /> Export CSV
+            </Button>
+            <Button onClick={() => setIsCreateOpen(true)} className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
+              <Plus className="w-4 h-4 mr-2" /> New Booking
+            </Button>
+          </div>
         </header>
 
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -184,7 +215,7 @@ export default function Bookings() {
         </Dialog>
 
         {/* Edit Dialog */}
-        <Dialog open={!!editingBooking} onOpenChange={(open) => !open && setEditingBooking(null)}>
+        <Dialog open={!!editingBooking} onOpenChange={(open: boolean) => !open && setEditingBooking(null)}>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Edit Reservation</DialogTitle>
