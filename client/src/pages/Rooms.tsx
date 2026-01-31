@@ -75,14 +75,15 @@ export default function Rooms() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 relative overflow-hidden">
-      <div className="absolute inset-0 bg-hotel-fade z-0" />
+    <div className="flex min-h-screen bg-slate-900 relative overflow-hidden">
+      <div className="absolute inset-0 bg-rooms-full z-0 opacity-40" />
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-slate-900/60 z-0" />
       <Sidebar />
-      <main className="flex-1 ml-64 p-8 animate-in relative z-10">
+      <main className="flex-1 ml-64 p-8 animate-in relative z-10 text-white">
         <header className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-display font-bold text-slate-900">Rooms</h1>
-            <p className="text-slate-500 mt-1">Manage your hotel's inventory and status.</p>
+            <h1 className="text-3xl font-display font-bold text-white">Rooms</h1>
+            <p className="text-slate-300 mt-1">Manage your hotel's inventory and status.</p>
           </div>
           <Button onClick={() => setIsCreateOpen(true)} className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
             <Plus className="w-4 h-4 mr-2" /> Add Room
@@ -91,9 +92,9 @@ export default function Rooms() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {isLoadingRooms ? (
-            <p className="col-span-full text-center py-12 text-muted-foreground">Loading rooms...</p>
+            <p className="col-span-full text-center py-12 text-slate-400">Loading rooms...</p>
           ) : rooms?.length === 0 ? (
-            <p className="col-span-full text-center py-12 text-muted-foreground">No rooms found. Add one to get started.</p>
+            <p className="col-span-full text-center py-12 text-slate-400">No rooms found. Add one to get started.</p>
           ) : (
             rooms?.map((room) => {
               const activeBooking = getRoomBookingStatus(room.id);
@@ -101,33 +102,33 @@ export default function Rooms() {
               const displayStatus = bookingStatus === 'checked in' ? 'Occupied' : room.status;
 
               return (
-                <div key={room.id} className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-slate-200 overflow-hidden group hover:shadow-md transition-all">
+                <div key={room.id} className="bg-slate-900/40 backdrop-blur-md rounded-xl shadow-2xl border border-white/10 overflow-hidden group hover:bg-slate-900/60 transition-all">
                   <div className="p-6">
                     <div className="flex justify-between items-start mb-4">
-                      <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                      <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center text-blue-400">
                         < BedDouble className="w-6 h-6" />
                       </div>
                       <div className="flex flex-col items-end gap-1">
                         <Badge variant={displayStatus === 'Available' ? 'default' : 'destructive'} className={cn(
                           "capitalize",
-                          displayStatus === 'Available' ? 'bg-green-100 text-green-700 hover:bg-green-200 shadow-none' : 
-                          displayStatus === 'Occupied' ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 shadow-none' : ''
+                          displayStatus === 'Available' ? 'bg-green-500/20 text-green-400 border-green-500/20 hover:bg-green-500/30 shadow-none' : 
+                          displayStatus === 'Occupied' ? 'bg-blue-500/20 text-blue-400 border-blue-500/20 hover:bg-blue-500/30 shadow-none' : ''
                         )}>
                           {displayStatus}
                         </Badge>
                         {bookingStatus && bookingStatus !== 'checked in' && (
                           <Badge variant="outline" className={cn(
                             "capitalize",
-                            bookingStatus === 'reserved' ? "border-amber-200 bg-amber-50 text-amber-700" :
-                            "border-slate-200 bg-slate-50 text-slate-700"
+                            bookingStatus === 'reserved' ? "border-amber-500/20 bg-amber-500/10 text-amber-400" :
+                            "border-white/10 bg-white/5 text-slate-400"
                           )}>
                             {bookingStatus}
                           </Badge>
                         )}
                       </div>
                     </div>
-                    <h3 className="text-2xl font-bold text-slate-900">{room.roomNumber}</h3>
-                    <p className="text-slate-500">{room.type}</p>
+                    <h3 className="text-2xl font-bold text-white">{room.roomNumber}</h3>
+                    <p className="text-slate-400">{room.type}</p>
                   </div>
                   <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
                     <Button variant="ghost" size="sm" onClick={() => setEditingRoom(room)}>

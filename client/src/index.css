@@ -99,6 +99,14 @@
   pointer-events: none;
 }
 
+.bg-rooms-full {
+  background-image: url('@assets/IMG_2040_1769873152431.JPG');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  pointer-events: none;
+}
+
 @keyframes animate-in {
   from {
     opacity: 0;
