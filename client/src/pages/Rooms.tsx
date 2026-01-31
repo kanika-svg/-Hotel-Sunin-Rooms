@@ -79,8 +79,8 @@ export default function Rooms() {
       <div className="absolute inset-0 bg-rooms-full z-0 opacity-40" />
       <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-slate-900/60 z-0" />
       <Sidebar />
-      <main className="flex-1 ml-64 p-8 animate-in relative z-10 text-white">
-        <header className="flex justify-between items-center mb-8">
+      <main className="flex-1 lg:ml-64 p-4 lg:p-8 animate-in relative z-10 text-white pt-20 lg:pt-8">
+        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-display font-bold text-white">Rooms</h1>
             <p className="text-slate-300 mt-1">Manage your hotel's inventory and status.</p>

@@ -33,7 +33,7 @@ export default function Dashboard() {
       <div className="absolute inset-0 bg-dashboard-full z-0 opacity-60" />
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 via-slate-900/40 to-slate-900/20 z-0" />
       <Sidebar />
-      <main className="flex-1 ml-64 p-8 animate-in relative z-10">
+      <main className="flex-1 lg:ml-64 p-4 lg:p-8 animate-in relative z-10 pt-20 lg:pt-8">
         <header className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-display font-bold text-white">Sunin Hotel</h1>
