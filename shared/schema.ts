@@ -19,6 +19,7 @@ export const bookings = pgTable("bookings", {
   roomId: integer("room_id").notNull().references(() => rooms.id),
   checkIn: timestamp("check_in").notNull(),
   checkOut: timestamp("check_out").notNull(),
+  status: text("status").notNull().default("reserved"), // reserved, checked in, checked out
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
 });

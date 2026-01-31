@@ -5,14 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertRoomSchema, type InsertRoom } from "@shared/schema";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -49,9 +41,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useBookings } from "@/hooks/use-bookings";
+import { cn } from "@/lib/utils";
 
 export default function Rooms() {
-  const { data: rooms, isLoading } = useRooms();
+  const { data: rooms, isLoading: isLoadingRooms } = useRooms();
+  const { data: bookings } = useBookings();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<any>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -62,6 +57,24 @@ export default function Rooms() {
       await deleteRoom.mutateAsync(deletingId);
       setDeletingId(null);
     }
+  };
+
+  const getRoomBookingStatus = (roomId: number) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Find any booking for this room that is currently active
+    const activeBooking = bookings?.find(b => 
+      b.roomId === roomId && 
+      new Date(b.checkIn) <= new Date() && 
+      new Date(b.checkOut) >= today &&
+      b.status !== 'checked out'
+    );
+
+    if (activeBooking) {
+      return activeBooking.status;
+    }
+    return null;
   };
 
   return (
@@ -79,35 +92,50 @@ export default function Rooms() {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {isLoading ? (
+          {isLoadingRooms ? (
             <p className="col-span-full text-center py-12 text-muted-foreground">Loading rooms...</p>
           ) : rooms?.length === 0 ? (
             <p className="col-span-full text-center py-12 text-muted-foreground">No rooms found. Add one to get started.</p>
           ) : (
-            rooms?.map((room) => (
-              <div key={room.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden group hover:shadow-md transition-all">
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
-                      <BedDouble className="w-6 h-6" />
+            rooms?.map((room) => {
+              const bookingStatus = getRoomBookingStatus(room.id);
+              return (
+                <div key={room.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden group hover:shadow-md transition-all">
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                        < BedDouble className="w-6 h-6" />
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <Badge variant={room.status === 'Available' ? 'default' : 'destructive'} className={room.status === 'Available' ? 'bg-green-100 text-green-700 hover:bg-green-200 shadow-none capitalize' : 'capitalize'}>
+                          {room.status}
+                        </Badge>
+                        {bookingStatus && (
+                          <Badge variant="outline" className={cn(
+                            "capitalize",
+                            bookingStatus === 'checked in' ? "border-blue-200 bg-blue-50 text-blue-700" :
+                            bookingStatus === 'reserved' ? "border-amber-200 bg-amber-50 text-amber-700" :
+                            "border-slate-200 bg-slate-50 text-slate-700"
+                          )}>
+                            {bookingStatus}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                    <Badge variant={room.status === 'Available' ? 'default' : 'destructive'} className={room.status === 'Available' ? 'bg-green-100 text-green-700 hover:bg-green-200 shadow-none' : ''}>
-                      {room.status}
-                    </Badge>
+                    <h3 className="text-2xl font-bold text-slate-900">{room.roomNumber}</h3>
+                    <p className="text-slate-500">{room.type}</p>
                   </div>
-                  <h3 className="text-2xl font-bold text-slate-900">{room.roomNumber}</h3>
-                  <p className="text-slate-500">{room.type}</p>
+                  <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setEditingRoom(room)}>
+                      <Pencil className="w-4 h-4 mr-1" /> Edit
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setDeletingId(room.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => setEditingRoom(room)}>
-                    <Pencil className="w-4 h-4 mr-1" /> Edit
-                  </Button>
-                  <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setDeletingId(room.id)}>
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 

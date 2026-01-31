@@ -34,6 +34,7 @@ const formSchema = insertBookingSchema.extend({
   roomId: z.coerce.number(),
   checkIn: z.coerce.date(),
   checkOut: z.coerce.date(),
+  status: z.string().default("reserved"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -61,16 +62,21 @@ export function BookingForm({ bookingId, initialData, onSuccess, onCancel }: Boo
       roomId: initialData?.roomId || undefined,
       checkIn: initialData?.checkIn ? new Date(initialData.checkIn) : undefined,
       checkOut: initialData?.checkOut ? new Date(initialData.checkOut) : undefined,
+      status: initialData?.status || "reserved",
       notes: initialData?.notes || "",
     },
   });
 
   async function onSubmit(data: FormData) {
     try {
+      const formattedData = {
+        ...data,
+        notes: data.notes || null,
+      };
       if (isEditing) {
-        await updateBooking.mutateAsync({ id: bookingId, ...data });
+        await updateBooking.mutateAsync({ id: bookingId, ...formattedData });
       } else {
-        await createBooking.mutateAsync(data);
+        await createBooking.mutateAsync(formattedData);
       }
       onSuccess();
     } catch (error) {
@@ -142,6 +148,29 @@ export function BookingForm({ bookingId, initialData, onSuccess, onCancel }: Boo
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Booking Status</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="reserved">Reserved</SelectItem>
+                  <SelectItem value="checked in">Checked In</SelectItem>
+                  <SelectItem value="checked out">Checked Out</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="grid grid-cols-2 gap-4">
           <FormField
