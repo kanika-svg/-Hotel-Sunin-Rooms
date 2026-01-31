@@ -1,3 +1,4 @@
+import hotelLogo from "@assets/IMG_2034_1769871171499.JPG";
 import { Link, useLocation } from "wouter";
 import { 
   LayoutDashboard, 
@@ -20,12 +21,12 @@ export function Sidebar() {
 
   return (
     <aside className="fixed inset-y-0 left-0 w-64 bg-slate-900 text-white z-50 flex flex-col transition-all duration-300">
-      <div className="h-16 flex items-center px-6 border-b border-slate-800">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <BedDouble className="w-5 h-5 text-white" />
+      <div className="h-20 flex items-center px-6 border-b border-slate-800">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex items-center justify-center">
+            <img src={hotelLogo} alt="Sunin Hotel Logo" className="w-full h-full object-contain" />
           </div>
-          <span className="font-display font-bold text-xl tracking-tight">Hotelier</span>
+          <span className="font-display font-bold text-lg tracking-tight leading-tight">Sunin Hotel</span>
         </div>
       </div>
 

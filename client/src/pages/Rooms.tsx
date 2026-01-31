@@ -206,19 +206,9 @@ function RoomDialog({ open, onOpenChange, initialData }: { open: boolean; onOpen
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Room Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Standard">Standard</SelectItem>
-                      <SelectItem value="Deluxe">Deluxe</SelectItem>
-                      <SelectItem value="VIP">VIP</SelectItem>
-                      <SelectItem value="Suite">Suite</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <Input placeholder="Standard, Deluxe, VIP, etc." {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

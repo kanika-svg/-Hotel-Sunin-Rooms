@@ -34,7 +34,7 @@ export default function Dashboard() {
       <main className="flex-1 ml-64 p-8 animate-in">
         <header className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-display font-bold text-slate-900">Dashboard</h1>
+            <h1 className="text-3xl font-display font-bold text-slate-900">Sunin Hotel</h1>
             <p className="text-slate-500 mt-1">Welcome back, here's what's happening today.</p>
           </div>
           <Button onClick={() => setLocation("/bookings")} className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
