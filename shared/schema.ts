@@ -40,7 +40,12 @@ export const bookingsRelations = relations(bookings, ({ one }) => ({
 
 // === BASE SCHEMAS ===
 
-export const insertRoomSchema = createInsertSchema(rooms).omit({ id: true });
+export const insertRoomSchema = createInsertSchema(rooms, {
+  price: z.preprocess((val) => {
+    if (typeof val === "string") return parseInt(val, 10);
+    return val;
+  }, z.number()),
+}).omit({ id: true });
 export const insertBookingSchema = createInsertSchema(bookings).omit({ id: true, createdAt: true });
 
 // === EXPLICIT API CONTRACT TYPES ===
