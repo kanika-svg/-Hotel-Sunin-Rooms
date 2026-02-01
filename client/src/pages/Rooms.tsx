@@ -76,7 +76,7 @@ export default function Rooms() {
 
   return (
     <div className="flex min-h-screen bg-slate-900 relative overflow-hidden">
-      <div className="absolute inset-0 bg-rooms-full z-0 opacity-40" />
+      <div className="absolute inset-0 bg-rooms-full z-0 opacity-40 bg-[length:100%_100%] bg-no-repeat" />
       <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-slate-900/60 z-0" />
       <Sidebar />
       <main className="flex-1 lg:ml-64 p-4 lg:p-8 animate-in relative z-10 text-white pt-20 lg:pt-8">
@@ -105,8 +105,15 @@ export default function Rooms() {
                 <div key={room.id} className="bg-slate-900/40 backdrop-blur-md rounded-xl shadow-2xl border border-white/10 overflow-hidden group hover:bg-slate-900/60 transition-all">
                   <div className="p-6">
                     <div className="flex justify-between items-start mb-4">
-                      <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center text-blue-400">
-                        < BedDouble className="w-6 h-6" />
+                      <div className="flex flex-col gap-1">
+                        <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center text-blue-400">
+                          <BedDouble className="w-6 h-6" />
+                        </div>
+                        {activeBooking && (
+                          <p className="text-xs font-medium text-blue-400 mt-2 bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20 max-w-[120px] truncate">
+                            {activeBooking.guestName}
+                          </p>
+                        )}
                       </div>
                       <div className="flex flex-col items-end gap-1">
                         <Badge variant={displayStatus === 'Available' ? 'default' : 'destructive'} className={cn(
@@ -129,6 +136,7 @@ export default function Rooms() {
                     </div>
                     <h3 className="text-2xl font-bold text-white">{room.roomNumber}</h3>
                     <p className="text-slate-400">{room.type}</p>
+                    <p className="text-primary font-bold mt-2">${(room.price / 100).toFixed(2)}</p>
                   </div>
                   <div className="px-6 py-4 bg-white/5 border-t border-white/10 flex justify-end gap-2">
                     <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white hover:bg-white/10" onClick={() => setEditingRoom(room)}>
@@ -188,15 +196,23 @@ function RoomDialog({ open, onOpenChange, initialData }: { open: boolean; onOpen
 
   const form = useForm<InsertRoom>({
     resolver: zodResolver(insertRoomSchema),
-    defaultValues: initialData || {
+    defaultValues: initialData ? {
+      ...initialData,
+      price: initialData.price.toString()
+    } : {
       roomNumber: "",
       type: "Standard",
-      status: "Available"
+      status: "Available",
+      price: "0"
     },
   });
 
-  async function onSubmit(data: InsertRoom) {
+  async function onSubmit(values: any) {
     try {
+      const data = {
+        ...values,
+        price: Math.round(parseFloat(values.price) * 100)
+      };
       if (isEditing) {
         await updateRoom.mutateAsync({ id: initialData.id, ...data });
       } else {
@@ -241,6 +257,19 @@ function RoomDialog({ open, onOpenChange, initialData }: { open: boolean; onOpen
                   <FormLabel>Room Type</FormLabel>
                   <FormControl>
                     <Input placeholder="Standard, Deluxe, VIP, etc." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Price per Night ($)</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" placeholder="99.99" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

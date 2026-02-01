@@ -10,6 +10,7 @@ export const rooms = pgTable("rooms", {
   roomNumber: text("room_number").notNull().unique(),
   type: text("type").notNull(), // Standard, Deluxe, VIP
   status: text("status").notNull().default("Available"), // Available, Maintenance
+  price: integer("price").notNull().default(0),
 });
 
 export const bookings = pgTable("bookings", {
