@@ -143,7 +143,7 @@ export default function Rooms() {
                         : room.price.toLocaleString()}
                     </p>
                   </div>
-                  <div className="px-6 py-4 bg-white/5 border-t border-white/10 flex justify-end gap-2 mt-auto">
+                  <div className="px-6 py-4 bg-white/5 border-t border-white/10 flex justify-center gap-2 mt-auto">
                     <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white hover:bg-white/10" onClick={() => setEditingRoom(room)}>
                       <Pencil className="w-4 h-4 mr-1" /> Edit
                     </Button>
