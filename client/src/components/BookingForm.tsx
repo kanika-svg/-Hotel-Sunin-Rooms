@@ -1,6 +1,6 @@
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertBookingSchema, type InsertBooking } from "@shared/schema";
+import { insertBookingSchema, type InsertBooking, type Room } from "@shared/schema";
 import { useRooms } from "@/hooks/use-rooms";
 import { useCreateBooking, useUpdateBooking } from "@/hooks/use-bookings";
 import { Button } from "@/components/ui/button";
@@ -23,11 +23,12 @@ import {
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DialogFooter } from "@/components/ui/dialog";
 import { z } from "zod";
+import { useState, useEffect } from "react";
 
 // Extend schema to handle Date objects from form that need coercion
 const formSchema = insertBookingSchema.extend({
@@ -35,6 +36,7 @@ const formSchema = insertBookingSchema.extend({
   checkIn: z.coerce.date(),
   checkOut: z.coerce.date(),
   status: z.string().default("reserved"),
+  paymentStatus: z.string().default("Unpaid"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -63,9 +65,36 @@ export function BookingForm({ bookingId, initialData, onSuccess, onCancel }: Boo
       checkIn: initialData?.checkIn ? new Date(initialData.checkIn) : undefined,
       checkOut: initialData?.checkOut ? new Date(initialData.checkOut) : undefined,
       status: initialData?.status || "reserved",
+      paymentStatus: initialData?.paymentStatus || "Unpaid",
       notes: initialData?.notes || "",
     },
   });
+
+  const selectedRoomId = useWatch({ control: form.control, name: 'roomId' });
+  const checkIn = useWatch({ control: form.control, name: 'checkIn' });
+  const checkOut = useWatch({ control: form.control, name: 'checkOut' });
+
+  const [calc, setCalc] = useState({ nights: 0, pricePerNight: 0, totalPrice: 0, currency: '₭' });
+
+  useEffect(() => {
+    if (selectedRoomId && checkIn && checkOut) {
+      const room = rooms?.find(r => r.id === Number(selectedRoomId));
+      if (room) {
+        const nights = differenceInDays(new Date(checkOut), new Date(checkIn));
+        if (nights > 0) {
+          const pricePerNight = room.currency === 'USD' ? room.price / 100 : room.price;
+          setCalc({
+            nights,
+            pricePerNight,
+            totalPrice: nights * (room.price), // Keep internal cents/units for DB
+            currency: room.currency === 'USD' ? '$' : '₭'
+          });
+        } else {
+          setCalc({ nights: 0, pricePerNight: 0, totalPrice: 0, currency: '₭' });
+        }
+      }
+    }
+  }, [selectedRoomId, checkIn, checkOut, rooms]);
 
   async function onSubmit(data: FormData) {
     try {
@@ -73,6 +102,7 @@ export function BookingForm({ bookingId, initialData, onSuccess, onCancel }: Boo
         ...data,
         notes: data.notes || null,
         roomId: Number(data.roomId),
+        totalPrice: calc.totalPrice,
       };
       if (isEditing) {
         await updateBooking.mutateAsync({ id: bookingId, ...formattedData });
@@ -139,7 +169,7 @@ export function BookingForm({ bookingId, initialData, onSuccess, onCancel }: Boo
                     {availableRooms.length === 0 && <div className="p-2 text-sm text-muted-foreground">No available rooms</div>}
                     {availableRooms.map((room) => (
                       <SelectItem key={room.id} value={String(room.id)}>
-                        Room {room.roomNumber} ({room.type})
+                        Room {room.roomNumber} ({room.type}) - {room.currency === 'USD' ? '$' : '₭'}{room.currency === 'USD' ? (room.price / 100).toFixed(2) : room.price.toLocaleString()}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -150,28 +180,51 @@ export function BookingForm({ bookingId, initialData, onSuccess, onCancel }: Boo
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="status"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Booking Status</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="reserved">Reserved</SelectItem>
-                  <SelectItem value="checked in">Checked In</SelectItem>
-                  <SelectItem value="checked out">Checked Out</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Booking Status</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="reserved">Reserved</SelectItem>
+                    <SelectItem value="checked in">Checked In</SelectItem>
+                    <SelectItem value="checked out">Checked Out</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="paymentStatus"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Payment Status</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="Unpaid">Unpaid</SelectItem>
+                    <SelectItem value="Paid">Paid</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <div className="grid grid-cols-2 gap-4">
           <FormField
@@ -258,6 +311,23 @@ export function BookingForm({ bookingId, initialData, onSuccess, onCancel }: Boo
             )}
           />
         </div>
+
+        {calc.nights > 0 && (
+          <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-500">Price per night:</span>
+              <span className="font-medium">{calc.currency}{calc.pricePerNight.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-500">Number of nights:</span>
+              <span className="font-medium">{calc.nights}</span>
+            </div>
+            <div className="flex justify-between text-lg font-bold border-t border-slate-200 pt-2 mt-2">
+              <span className="text-slate-900">Total Price:</span>
+              <span className="text-primary">{calc.currency}{(calc.totalPrice / (calc.currency === '$' ? 100 : 1)).toLocaleString()}</span>
+            </div>
+          </div>
+        )}
 
         <FormField
           control={form.control}

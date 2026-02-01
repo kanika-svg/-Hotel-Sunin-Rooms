@@ -24,6 +24,9 @@ export const bookings = pgTable("bookings", {
   status: text("status").notNull().default("reserved"), // reserved, checked in, checked out
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
+  totalPrice: integer("total_price").notNull().default(0),
+  paymentStatus: text("payment_status").notNull().default("Unpaid"), // Paid, Unpaid
+  invoiceNumber: text("invoice_number").unique(),
 });
 
 // === RELATIONS ===
@@ -47,7 +50,11 @@ export const insertRoomSchema = createInsertSchema(rooms, {
     return val;
   }, z.number().int().min(0)),
 }).omit({ id: true });
-export const insertBookingSchema = createInsertSchema(bookings).omit({ id: true, createdAt: true });
+export const insertBookingSchema = createInsertSchema(bookings, {
+  totalPrice: z.number().int().min(0),
+  paymentStatus: z.string().default("Unpaid"),
+  invoiceNumber: z.string().optional(),
+}).omit({ id: true, createdAt: true });
 
 // === EXPLICIT API CONTRACT TYPES ===
 
