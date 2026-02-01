@@ -102,8 +102,8 @@ export default function Rooms() {
               const displayStatus = bookingStatus === 'checked in' ? 'Occupied' : room.status;
 
               return (
-                <div key={room.id} className="bg-slate-900/40 backdrop-blur-md rounded-xl shadow-2xl border border-white/10 overflow-hidden group hover:bg-slate-900/60 transition-all">
-                  <div className="p-6">
+                <div key={room.id} className="bg-slate-900/40 backdrop-blur-md rounded-xl shadow-2xl border border-white/10 overflow-hidden group hover:bg-slate-900/60 transition-all flex flex-col">
+                  <div className="p-6 flex-1">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex flex-col gap-1">
                         <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center text-blue-400">
@@ -138,7 +138,7 @@ export default function Rooms() {
                     <p className="text-slate-400">{room.type}</p>
                     <p className="text-primary font-bold mt-2">${(room.price / 100).toFixed(2)}</p>
                   </div>
-                  <div className="px-6 py-4 bg-white/5 border-t border-white/10 flex justify-end gap-2">
+                  <div className="px-6 py-4 bg-white/5 border-t border-white/10 flex justify-end gap-2 mt-auto">
                     <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white hover:bg-white/10" onClick={() => setEditingRoom(room)}>
                       <Pencil className="w-4 h-4 mr-1" /> Edit
                     </Button>
