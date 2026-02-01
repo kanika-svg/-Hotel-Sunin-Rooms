@@ -136,7 +136,12 @@ export default function Rooms() {
                     </div>
                     <h3 className="text-2xl font-bold text-white">{room.roomNumber}</h3>
                     <p className="text-slate-400">{room.type}</p>
-                    <p className="text-white font-bold mt-2">₭{(room.price).toLocaleString()}</p>
+                    <p className="text-white font-bold mt-2">
+                      {room.currency === "USD" ? "$" : "₭"}
+                      {room.currency === "USD" 
+                        ? (room.price / 100).toFixed(2) 
+                        : room.price.toLocaleString()}
+                    </p>
                   </div>
                   <div className="px-6 py-4 bg-white/5 border-t border-white/10 flex justify-end gap-2 mt-auto">
                     <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white hover:bg-white/10" onClick={() => setEditingRoom(room)}>
@@ -194,16 +199,17 @@ function RoomDialog({ open, onOpenChange, initialData }: { open: boolean; onOpen
   const isEditing = !!initialData;
   const isPending = createRoom.isPending || updateRoom.isPending;
 
-  const form = useForm<InsertRoom>({
+  const form = useForm<any>({
     resolver: zodResolver(insertRoomSchema),
     defaultValues: initialData ? {
       ...initialData,
-      price: initialData.price.toString()
+      price: initialData.currency === "USD" ? (initialData.price / 100).toString() : initialData.price.toString()
     } : {
       roomNumber: "",
       type: "Standard",
       status: "Available",
-      price: "0"
+      price: "0",
+      currency: "Kip"
     },
   });
 
@@ -211,7 +217,9 @@ function RoomDialog({ open, onOpenChange, initialData }: { open: boolean; onOpen
     try {
       const data = {
         ...values,
-        price: Math.round(parseFloat(values.price.toString()))
+        price: values.currency === "USD" 
+          ? Math.round(parseFloat(values.price.toString()) * 100)
+          : Math.round(parseFloat(values.price.toString()))
       };
       if (isEditing) {
         await updateRoom.mutateAsync({ id: initialData.id, ...data });
@@ -264,12 +272,38 @@ function RoomDialog({ open, onOpenChange, initialData }: { open: boolean; onOpen
             />
             <FormField
               control={form.control}
+              name="currency"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Currency</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Kip">Kip (₭)</SelectItem>
+                      <SelectItem value="USD">USD ($)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="price"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Price per Night (₭)</FormLabel>
+                  <FormLabel>Price per Night</FormLabel>
                   <FormControl>
-                    <Input type="number" step="1" placeholder="50000" {...field} />
+                    <Input 
+                      type="number" 
+                      step={form.watch("currency") === "USD" ? "0.01" : "1"} 
+                      placeholder={form.watch("currency") === "USD" ? "99.99" : "50000"} 
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
