@@ -136,7 +136,7 @@ export default function Rooms() {
                     </div>
                     <h3 className="text-2xl font-bold text-white">{room.roomNumber}</h3>
                     <p className="text-slate-400">{room.type}</p>
-                    <p className="text-white font-bold mt-2">${(room.price / 100).toFixed(2)}</p>
+                    <p className="text-white font-bold mt-2">₭{(room.price).toLocaleString()}</p>
                   </div>
                   <div className="px-6 py-4 bg-white/5 border-t border-white/10 flex justify-end gap-2 mt-auto">
                     <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white hover:bg-white/10" onClick={() => setEditingRoom(room)}>
@@ -211,7 +211,7 @@ function RoomDialog({ open, onOpenChange, initialData }: { open: boolean; onOpen
     try {
       const data = {
         ...values,
-        price: Math.round(parseFloat(values.price.toString()) * 100)
+        price: Math.round(parseFloat(values.price.toString()))
       };
       if (isEditing) {
         await updateRoom.mutateAsync({ id: initialData.id, ...data });
@@ -267,9 +267,9 @@ function RoomDialog({ open, onOpenChange, initialData }: { open: boolean; onOpen
               name="price"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Price per Night ($)</FormLabel>
+                  <FormLabel>Price per Night (₭)</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" placeholder="99.99" {...field} />
+                    <Input type="number" step="1" placeholder="50000" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

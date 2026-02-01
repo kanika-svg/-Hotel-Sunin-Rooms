@@ -44,7 +44,7 @@ export const insertRoomSchema = createInsertSchema(rooms, {
   price: z.preprocess((val) => {
     if (typeof val === "string") return parseInt(val, 10);
     return val;
-  }, z.number()),
+  }, z.number().int().min(0)),
 }).omit({ id: true });
 export const insertBookingSchema = createInsertSchema(bookings).omit({ id: true, createdAt: true });
 
