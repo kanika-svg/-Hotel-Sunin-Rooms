@@ -62,8 +62,8 @@ export function BookingForm({ bookingId, initialData, onSuccess, onCancel }: Boo
       guestName: initialData?.guestName || "",
       phone: initialData?.phone || "",
       roomId: initialData?.roomId || undefined,
-      checkIn: initialData?.checkIn ? new Date(initialData.checkIn) : undefined,
-      checkOut: initialData?.checkOut ? new Date(initialData.checkOut) : undefined,
+      checkIn: initialData?.checkIn ? new Date(initialData.checkIn) : new Date(),
+      checkOut: initialData?.checkOut ? new Date(initialData.checkOut) : new Date(new Date().setDate(new Date().getDate() + 1)),
       status: initialData?.status || "reserved",
       paymentStatus: initialData?.paymentStatus || "Unpaid",
       notes: initialData?.notes || "",
@@ -80,7 +80,9 @@ export function BookingForm({ bookingId, initialData, onSuccess, onCancel }: Boo
     if (selectedRoomId && checkIn && checkOut) {
       const room = rooms?.find(r => r.id === Number(selectedRoomId));
       if (room) {
-        const nights = differenceInDays(new Date(checkOut), new Date(checkIn));
+        const dIn = new Date(checkIn);
+        const dOut = new Date(checkOut);
+        const nights = differenceInDays(dOut, dIn);
         if (nights > 0) {
           const pricePerNight = room.currency === 'USD' ? room.price / 100 : room.price;
           setCalc({
@@ -90,7 +92,7 @@ export function BookingForm({ bookingId, initialData, onSuccess, onCancel }: Boo
             currency: room.currency === 'USD' ? '$' : '₭'
           });
         } else {
-          setCalc({ nights: 0, pricePerNight: 0, totalPrice: 0, currency: '₭' });
+          setCalc({ nights: 0, pricePerNight: 0, totalPrice: 0, currency: room.currency === 'USD' ? '$' : '₭' });
         }
       }
     }
