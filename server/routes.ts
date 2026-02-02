@@ -190,6 +190,17 @@ export async function registerRoutes(
     res.json(stats);
   });
 
+  // === SETTINGS ===
+  app.get("/api/settings", async (req, res) => {
+    const s = await storage.getSettings();
+    res.json(s);
+  });
+
+  app.patch("/api/settings", async (req, res) => {
+    const updated = await storage.updateSettings(req.body);
+    res.json(updated);
+  });
+
   return httpServer;
 }
 

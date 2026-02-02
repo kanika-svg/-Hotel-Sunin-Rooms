@@ -31,8 +31,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Trash2, Pencil, Calendar, Download, Receipt, Printer } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
-import { type Booking, type Room } from "@shared/schema";
+import { type Booking, type Room, type Settings } from "@shared/schema";
 import { cn } from "@/lib/utils";
 
 export default function Bookings() {
@@ -291,6 +292,10 @@ export default function Bookings() {
 
 function InvoiceDialog({ booking, open, onOpenChange }: { booking: (Booking & { room: Room }) | null; open: boolean; onOpenChange: (open: boolean) => void }) {
   const printRef = useRef<HTMLDivElement>(null);
+  const { data: settings } = useQuery<Settings>({
+    queryKey: ["/api/settings"],
+  });
+
   if (!booking) return null;
 
   const nights = differenceInDays(new Date(booking.checkOut), new Date(booking.checkIn));
@@ -307,14 +312,16 @@ function InvoiceDialog({ booking, open, onOpenChange }: { booking: (Booking & { 
     if (!windowPrint) return;
 
     windowPrint.document.write('<html><head><title>Invoice</title>');
-    windowPrint.document.write('<style>body{font-family:sans-serif;padding:40px;color:#000;}table{width:100%;border-collapse:collapse;margin:20px 0;}th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd;}.header{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:20px;margin-bottom:20px;}.footer{margin-top:50px;text-align:center;color:#666;font-size:12px;}.total-section{margin-top:30px;float:right;width:300px;}</style>');
+    windowPrint.document.write('<style>body{font-family:sans-serif;padding:40px;color:#000;}table{width:100%;border-collapse:collapse;margin:20px 0;}th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd;}.header{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:20px;margin-bottom:20px;}.footer{margin-top:50px;text-align:center;color:#666;font-size:12px;}.total-section{margin-top:30px;float:right;width:300px;}.logo-container{display:flex;align-items:center;gap:20px;margin-bottom:20px;}.logo-img{max-height:80px;max-width:200px;object-fit:contain;}</style>');
     windowPrint.document.write('</head><body>');
     windowPrint.document.write(printContent.innerHTML);
     windowPrint.document.write('</body></html>');
     windowPrint.document.close();
     windowPrint.focus();
-    windowPrint.print();
-    windowPrint.close();
+    setTimeout(() => {
+      windowPrint.print();
+      windowPrint.close();
+    }, 250);
   };
 
   return (
@@ -332,11 +339,18 @@ function InvoiceDialog({ booking, open, onOpenChange }: { booking: (Booking & { 
 
         <div ref={printRef} className="p-8 bg-white border border-slate-200 rounded-lg text-slate-900">
           <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-8">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tighter mb-1 uppercase">Sunin Hotel</h1>
-              <p className="text-sm text-slate-500 font-medium">Professional Hospitality Services</p>
-              <p className="text-xs text-slate-400 mt-2">Vientiane, Lao PDR</p>
-              <p className="text-xs text-slate-400">Contact: +856 20 1234 5678</p>
+            <div className="flex items-center gap-6">
+              {settings?.hotelLogo && (
+                <div className="w-24 h-24 overflow-hidden rounded">
+                  <img src={settings.hotelLogo} alt="Hotel Logo" className="w-full h-full object-contain" />
+                </div>
+              )}
+              <div>
+                <h1 className="text-3xl font-bold tracking-tighter mb-1 uppercase">{settings?.hotelName || "Sunin Hotel"}</h1>
+                <p className="text-sm text-slate-500 font-medium">Professional Hospitality Services</p>
+                <p className="text-xs text-slate-400 mt-2">{settings?.hotelAddress || "Vientiane, Lao PDR"}</p>
+                <p className="text-xs text-slate-400">Contact: {settings?.hotelPhone || "+856 20 1234 5678"}</p>
+              </div>
             </div>
             <div className="text-right">
               <h2 className="text-xl font-bold text-slate-400 uppercase tracking-widest">Invoice</h2>

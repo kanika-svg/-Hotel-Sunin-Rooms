@@ -8,6 +8,7 @@ import Dashboard from "@/pages/Dashboard";
 import Bookings from "@/pages/Bookings";
 import Rooms from "@/pages/Rooms";
 import Calendar from "@/pages/Calendar";
+import Settings from "@/pages/Settings";
 
 function Router() {
   return (
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/bookings" component={Bookings} />
       <Route path="/rooms" component={Rooms} />
       <Route path="/calendar" component={Calendar} />
+      <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>
   );

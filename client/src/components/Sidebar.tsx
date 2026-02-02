@@ -8,7 +8,8 @@ import {
   Users, 
   LogOut,
   Menu,
-  X
+  X,
+  Settings as SettingsIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +18,7 @@ const links = [
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/bookings", label: "Bookings", icon: Users },
   { href: "/rooms", label: "Rooms", icon: BedDouble },
+  { href: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
 export function Sidebar() {

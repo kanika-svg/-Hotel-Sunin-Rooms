@@ -75,9 +75,14 @@ export type UpdateBookingRequest = Partial<InsertBooking>;
 export type RoomResponse = Room;
 export type BookingResponse = Booking & { room?: Room }; // Often need room details with booking
 
-export type DashboardStats = {
-  totalOccupied: number;
-  checkInsToday: number;
-  checkOutsToday: number;
-  availableRooms: number;
-};
+export const settings = pgTable("settings", {
+  id: serial("id").primaryKey(),
+  hotelName: text("hotel_name").notNull().default("Sunin Hotel"),
+  hotelAddress: text("hotel_address").notNull().default("Vientiane, Lao PDR"),
+  hotelPhone: text("hotel_phone").notNull().default("+856 20 1234 5678"),
+  hotelLogo: text("hotel_logo"), // base64 or URL
+});
+
+export const insertSettingsSchema = createInsertSchema(settings).omit({ id: true });
+export type Settings = typeof settings.$inferSelect;
+export type InsertSettings = z.infer<typeof insertSettingsSchema>;

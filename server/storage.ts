@@ -6,7 +6,10 @@ import {
   type InsertRoom,
   type Booking,
   type InsertBooking,
-  type DashboardStats
+  type DashboardStats,
+  type Settings,
+  type InsertSettings,
+  settings,
 } from "@shared/schema";
 import { eq, and, or, gte, lte, between, sql, not } from "drizzle-orm";
 
@@ -24,6 +27,10 @@ export interface IStorage {
   createBooking(booking: InsertBooking): Promise<Booking>;
   updateBooking(id: number, updates: Partial<InsertBooking>): Promise<Booking>;
   deleteBooking(id: number): Promise<void>;
+
+  // Settings
+  getSettings(): Promise<Settings>;
+  updateSettings(updates: Partial<InsertSettings>): Promise<Settings>;
 
   // Logic
   checkAvailability(roomId: number, checkIn: Date, checkOut: Date, excludeBookingId?: number): Promise<boolean>;
@@ -119,6 +126,25 @@ export class DatabaseStorage implements IStorage {
 
   async deleteBooking(id: number): Promise<void> {
     await db.delete(bookings).where(eq(bookings.id, id));
+  }
+
+  // === SETTINGS ===
+  async getSettings(): Promise<Settings> {
+    const [existing] = await db.select().from(settings);
+    if (existing) return existing;
+    
+    const [newSettings] = await db.insert(settings).values({
+      hotelName: "Sunin Hotel",
+      hotelAddress: "Vientiane, Lao PDR",
+      hotelPhone: "+856 20 1234 5678"
+    }).returning();
+    return newSettings;
+  }
+
+  async updateSettings(updates: Partial<InsertSettings>): Promise<Settings> {
+    const existing = await this.getSettings();
+    const [updated] = await db.update(settings).set(updates).where(eq(settings.id, existing.id)).returning();
+    return updated;
   }
 
   // === LOGIC ===
