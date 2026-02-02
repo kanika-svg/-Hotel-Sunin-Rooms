@@ -301,7 +301,10 @@ function InvoiceDialog({ booking, open, onOpenChange }: { booking: (Booking & { 
   const nights = differenceInDays(new Date(booking.checkOut), new Date(booking.checkIn));
   const currency = booking.room?.currency === 'USD' ? '$' : '₭';
   const pricePerNight = booking.room?.currency === 'USD' ? booking.room.price / 100 : booking.room.price;
-  const totalPriceDisplay = (booking.totalPrice / (booking.room?.currency === 'USD' ? 100 : 1));
+  const subtotal = booking.totalPrice / (booking.room?.currency === 'USD' ? 100 : 1);
+  const taxRate = settings?.taxRate || 0;
+  const taxAmount = (subtotal * taxRate) / 100;
+  const totalWithTax = subtotal + taxAmount;
   const invoiceNumber = booking.invoiceNumber || `INV-${booking.id.toString().padStart(6, '0')}`;
 
   const handlePrint = () => {
@@ -410,15 +413,15 @@ function InvoiceDialog({ booking, open, onOpenChange }: { booking: (Booking & { 
       <div class="totals">
         <div class="total-row">
           <span style="color: #64748b;">Subtotal:</span>
-          <span>${currency}${totalPriceDisplay.toLocaleString()}</span>
+          <span>${currency}${subtotal.toLocaleString()}</span>
         </div>
         <div class="total-row">
-          <span style="color: #64748b;">Tax (0%):</span>
-          <span>${currency}0</span>
+          <span style="color: #64748b;">Tax (${taxRate}%):</span>
+          <span>${currency}${taxAmount.toLocaleString()}</span>
         </div>
         <div class="total-row grand-total">
           <span>Total:</span>
-          <span style="color: #2563eb;">${currency}${totalPriceDisplay.toLocaleString()}</span>
+          <span style="color: #2563eb;">${currency}${totalWithTax.toLocaleString()}</span>
         </div>
       </div>
 
@@ -507,7 +510,7 @@ function InvoiceDialog({ booking, open, onOpenChange }: { booking: (Booking & { 
                 </td>
                 <td className="py-4 text-center text-sm">{nights}</td>
                 <td className="py-4 text-right text-sm">{currency}{pricePerNight.toLocaleString()}</td>
-                <td className="py-4 text-right text-sm font-bold">{currency}{totalPriceDisplay.toLocaleString()}</td>
+                <td className="py-4 text-right text-sm font-bold">{currency}{subtotal.toLocaleString()}</td>
               </tr>
             </tbody>
           </table>
@@ -515,15 +518,15 @@ function InvoiceDialog({ booking, open, onOpenChange }: { booking: (Booking & { 
           <div className="ml-auto w-full sm:w-64 pt-6 border-t-2 border-slate-900 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-slate-500 font-medium">Subtotal:</span>
-              <span>{currency}{totalPriceDisplay.toLocaleString()}</span>
+              <span>{currency}{subtotal.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-slate-500 font-medium">Tax (0%):</span>
-              <span>{currency}0</span>
+              <span className="text-slate-500 font-medium">Tax ({taxRate}%):</span>
+              <span>{currency}{taxAmount.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-xl font-bold pt-2 border-t border-slate-100">
               <span>Total:</span>
-              <span className="text-primary">{currency}{totalPriceDisplay.toLocaleString()}</span>
+              <span className="text-primary">{currency}{totalWithTax.toLocaleString()}</span>
             </div>
           </div>
 

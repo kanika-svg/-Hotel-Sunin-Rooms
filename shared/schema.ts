@@ -81,6 +81,7 @@ export const settings = pgTable("settings", {
   hotelAddress: text("hotel_address").notNull().default("Vientiane, Lao PDR"),
   hotelPhone: text("hotel_phone").notNull().default("+856 20 1234 5678"),
   hotelLogo: text("hotel_logo"), // base64 or URL
+  taxRate: integer("tax_rate").notNull().default(0), // percentage
 });
 
 export const insertSettingsSchema = createInsertSchema(settings).omit({ id: true });

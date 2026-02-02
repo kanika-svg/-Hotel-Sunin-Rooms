@@ -80,6 +80,16 @@ export default function Settings() {
                   onBlur={(e) => updateSettingsMutation.mutate({ hotelPhone: e.target.value })}
                 />
               </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tax Rate (%)</label>
+                <Input 
+                  type="number"
+                  defaultValue={settings?.taxRate} 
+                  min="0"
+                  max="100"
+                  onBlur={(e) => updateSettingsMutation.mutate({ taxRate: parseInt(e.target.value) || 0 })}
+                />
+              </div>
             </CardContent>
           </Card>
 
