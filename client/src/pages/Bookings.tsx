@@ -312,10 +312,122 @@ function InvoiceDialog({ booking, open, onOpenChange }: { booking: (Booking & { 
     if (!windowPrint) return;
 
     windowPrint.document.write('<html><head><title>Invoice</title>');
-    windowPrint.document.write('<style>body{font-family:sans-serif;padding:40px;color:#000;}table{width:100%;border-collapse:collapse;margin:20px 0;}th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd;}.header{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:20px;margin-bottom:20px;}.footer{margin-top:50px;text-align:center;color:#666;font-size:12px;}.total-section{margin-top:30px;float:right;width:300px;}.logo-container{display:flex;align-items:center;gap:20px;margin-bottom:20px;}.logo-img{max-height:80px;max-width:200px;object-fit:contain;}</style>');
-    windowPrint.document.write('</head><body>');
-    windowPrint.document.write(printContent.innerHTML);
-    windowPrint.document.write('</body></html>');
+    windowPrint.document.write('<style>');
+    windowPrint.document.write(`
+      @media print {
+        @page { size: auto; margin: 0; }
+        body { margin: 1cm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      }
+      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; color: #0f172a; line-height: 1.5; }
+      .print-container { max-width: 800px; margin: 0 auto; }
+      table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+      th { text-align: left; padding: 12px; background-color: #f8fafc; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
+      td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+      .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 2px solid #0f172a; padding-bottom: 24px; }
+      .logo-section { display: flex; align-items: center; gap: 24px; }
+      .logo-img { max-height: 80px; width: auto; }
+      .hotel-info h1 { margin: 0; font-size: 28px; font-weight: 800; text-transform: uppercase; letter-spacing: -0.025em; }
+      .hotel-info p { margin: 2px 0; color: #64748b; font-size: 14px; }
+      .invoice-meta { text-align: right; }
+      .invoice-meta h2 { margin: 0; color: #94a3b8; font-size: 24px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+      .invoice-no { margin-top: 16px; font-weight: 700; font-size: 16px; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+      .section-label { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+      .section-content p { margin: 2px 0; font-size: 14px; }
+      .section-content .name { font-weight: 700; font-size: 18px; }
+      .totals { margin-left: auto; width: 280px; margin-top: 40px; border-top: 2px solid #0f172a; padding-top: 16px; }
+      .total-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; }
+      .total-row.grand-total { border-top: 1px solid #f1f5f9; margin-top: 8px; padding-top: 12px; font-size: 20px; font-weight: 800; }
+      .footer { margin-top: 60px; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 24px; }
+      .footer p { margin: 4px 0; color: #94a3b8; font-size: 12px; }
+      .status-badge { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; margin-top: 8px; }
+      .status-paid { background-color: #2563eb; color: #ffffff; }
+      .status-unpaid { border: 1px solid #e2e8f0; color: #64748b; }
+    `);
+    windowPrint.document.write('</style></head><body>');
+    windowPrint.document.write('<div class="print-container">');
+    windowPrint.document.write(`
+      <div class="header">
+        <div class="logo-section">
+          ${settings?.hotelLogo ? `<img src="${settings.hotelLogo}" class="logo-img" />` : ''}
+          <div class="hotel-info">
+            <h1>${settings?.hotelName || "Sunin Hotel"}</h1>
+            <p>Professional Hospitality Services</p>
+            <p>${settings?.hotelAddress || "Vientiane, Lao PDR"}</p>
+            <p>Contact: ${settings?.hotelPhone || "+856 20 1234 5678"}</p>
+          </div>
+        </div>
+        <div class="invoice-meta">
+          <h2>Invoice</h2>
+          <div class="invoice-no">No: ${invoiceNumber}</div>
+          <p>Date: ${format(new Date(), 'MMM d, yyyy')}</p>
+          <div class="status-badge ${booking.paymentStatus === 'Paid' ? 'status-paid' : 'status-unpaid'}">
+            ${booking.paymentStatus.toUpperCase()}
+          </div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <div class="section-label">Guest Information</div>
+          <div class="section-content">
+            <p class="name">${booking.guestName}</p>
+            <p>${booking.phone}</p>
+          </div>
+        </div>
+        <div>
+          <div class="section-label">Booking Details</div>
+          <div class="section-content">
+            <p><strong>Room:</strong> ${booking.room?.roomNumber}</p>
+            <p><strong>Type:</strong> ${booking.room?.type}</p>
+            <p><strong>Stay:</strong> ${format(new Date(booking.checkIn), 'MMM d')} - ${format(new Date(booking.checkOut), 'MMM d, yyyy')}</p>
+          </div>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th style="text-align: center;">Qty/Nights</th>
+            <th style="text-align: right;">Rate</th>
+            <th style="text-align: right;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <p style="margin: 0; font-weight: 600;">Accommodation</p>
+              <p style="margin: 0; font-size: 12px; color: #64748b;">Room ${booking.room?.roomNumber} (${booking.room?.type})</p>
+            </td>
+            <td style="text-align: center;">${nights}</td>
+            <td style="text-align: right;">${currency}${pricePerNight.toLocaleString()}</td>
+            <td style="text-align: right; font-weight: 700;">${currency}${totalPriceDisplay.toLocaleString()}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="totals">
+        <div class="total-row">
+          <span style="color: #64748b;">Subtotal:</span>
+          <span>${currency}${totalPriceDisplay.toLocaleString()}</span>
+        </div>
+        <div class="total-row">
+          <span style="color: #64748b;">Tax (0%):</span>
+          <span>${currency}0</span>
+        </div>
+        <div class="total-row grand-total">
+          <span>Total:</span>
+          <span style="color: #2563eb;">${currency}${totalPriceDisplay.toLocaleString()}</span>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p style="font-weight: 600; color: #475569;">Thank you for staying at Sunin Hotel!</p>
+        <p>Please keep this receipt for your records.</p>
+      </div>
+    `);
+    windowPrint.document.write('</div></body></html>');
     windowPrint.document.close();
     windowPrint.focus();
     setTimeout(() => {
