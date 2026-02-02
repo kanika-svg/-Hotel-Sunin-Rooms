@@ -405,7 +405,7 @@ function InvoiceDialog({ booking, open, onOpenChange }: { booking: (Booking & { 
             </td>
             <td style="text-align: center;">${nights}</td>
             <td style="text-align: right;">${currency}${pricePerNight.toLocaleString()}</td>
-            <td style="text-align: right; font-weight: 700;">${currency}${totalPriceDisplay.toLocaleString()}</td>
+            <td style="text-align: right; font-weight: 700;">${currency}${subtotal.toLocaleString()}</td>
           </tr>
         </tbody>
       </table>
