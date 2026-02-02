@@ -3,6 +3,7 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
+import { differenceInDays } from "date-fns";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -87,6 +88,16 @@ export async function registerRoutes(
 
       const input = api.bookings.create.input.parse(body);
       
+      // Calculate total price if not provided
+      let totalPrice = input.totalPrice;
+      if (!totalPrice) {
+        const room = await storage.getRoom(input.roomId);
+        if (room) {
+          const nights = Math.max(1, differenceInDays(new Date(input.checkOut), new Date(input.checkIn)));
+          totalPrice = nights * room.price;
+        }
+      }
+
       // Business Logic: Check Availability
       const checkIn = input.checkIn;
       const checkOut = input.checkOut;
@@ -103,7 +114,8 @@ export async function registerRoutes(
       const bookingData = {
         ...input,
         checkIn,
-        checkOut
+        checkOut,
+        totalPrice: totalPrice || 0
       };
 
       const booking = await storage.createBooking(bookingData as any);
@@ -189,12 +201,12 @@ async function seed() {
     
     // Create Rooms
     const rooms = await Promise.all([
-      storage.createRoom({ roomNumber: "101", type: "Standard", status: "Available" }),
-      storage.createRoom({ roomNumber: "102", type: "Standard", status: "Available" }),
-      storage.createRoom({ roomNumber: "103", type: "Standard", status: "Maintenance" }),
-      storage.createRoom({ roomNumber: "201", type: "Deluxe", status: "Available" }),
-      storage.createRoom({ roomNumber: "202", type: "Deluxe", status: "Available" }),
-      storage.createRoom({ roomNumber: "301", type: "VIP", status: "Available" }),
+      storage.createRoom({ roomNumber: "101", type: "Standard", price: 250000, status: "Available", currency: "Kip" }),
+      storage.createRoom({ roomNumber: "102", type: "Standard", price: 250000, status: "Available", currency: "Kip" }),
+      storage.createRoom({ roomNumber: "103", type: "Standard", price: 250000, status: "Maintenance", currency: "Kip" }),
+      storage.createRoom({ roomNumber: "201", type: "Deluxe", price: 450000, status: "Available", currency: "Kip" }),
+      storage.createRoom({ roomNumber: "202", type: "Deluxe", price: 450000, status: "Available", currency: "Kip" }),
+      storage.createRoom({ roomNumber: "301", type: "VIP", price: 850000, status: "Available", currency: "Kip" }),
     ]);
 
     // Create some Bookings
@@ -211,7 +223,9 @@ async function seed() {
       roomId: rooms[0].id,
       checkIn: today,
       checkOut: tomorrow,
-      notes: "Early check-in requested"
+      notes: "Early check-in requested",
+      totalPrice: 250000,
+      paymentStatus: "Unpaid"
     });
 
     await storage.createBooking({
@@ -220,7 +234,9 @@ async function seed() {
       roomId: rooms[3].id,
       checkIn: today,
       checkOut: nextWeek,
-      notes: "VIP Guest"
+      notes: "VIP Guest",
+      totalPrice: 3150000,
+      paymentStatus: "Paid"
     });
     
     console.log("Seeding complete!");

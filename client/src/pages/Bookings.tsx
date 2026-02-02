@@ -172,7 +172,7 @@ export default function Bookings() {
                       <TableCell>
                         <div className="font-bold text-slate-900">
                           {booking.room?.currency === 'USD' ? '$' : '₭'}
-                          {(booking.totalPrice / (booking.room?.currency === 'USD' ? 100 : 1)).toLocaleString()}
+                          {((booking.totalPrice || 0) / (booking.room?.currency === 'USD' ? 100 : 1)).toLocaleString()}
                         </div>
                         <Badge variant="outline" className={cn(
                           "text-[10px] uppercase font-bold",

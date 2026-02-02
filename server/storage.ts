@@ -97,7 +97,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createBooking(booking: InsertBooking): Promise<Booking> {
-    const [newBooking] = await db.insert(bookings).values(booking).returning();
+    // If totalPrice is 0, attempt to calculate it
+    let finalBooking = { ...booking };
+    if (!finalBooking.totalPrice || finalBooking.totalPrice === 0) {
+      const room = await this.getRoom(booking.roomId);
+      if (room) {
+        const checkIn = new Date(booking.checkIn);
+        const checkOut = new Date(booking.checkOut);
+        const diffDays = Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 3600 * 24)));
+        finalBooking.totalPrice = diffDays * room.price;
+      }
+    }
+    const [newBooking] = await db.insert(bookings).values(finalBooking).returning();
     return newBooking;
   }
 
