@@ -225,7 +225,8 @@ async function seed() {
       checkOut: tomorrow,
       notes: "Early check-in requested",
       totalPrice: 250000,
-      paymentStatus: "Unpaid"
+      paymentStatus: "Unpaid",
+      status: "checked in"
     });
 
     await storage.createBooking({
@@ -236,7 +237,8 @@ async function seed() {
       checkOut: nextWeek,
       notes: "VIP Guest",
       totalPrice: 3150000,
-      paymentStatus: "Paid"
+      paymentStatus: "Paid",
+      status: "checked in"
     });
     
     console.log("Seeding complete!");

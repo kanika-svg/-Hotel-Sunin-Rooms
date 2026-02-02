@@ -30,13 +30,16 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { z } from "zod";
 import { useState, useEffect } from "react";
 
-// Extend schema to handle Date objects from form that need coercion
-const formSchema = insertBookingSchema.extend({
-  roomId: z.coerce.number(),
-  checkIn: z.coerce.date(),
-  checkOut: z.coerce.date(),
+// Simplified form schema for client-side use
+const formSchema = z.object({
+  guestName: z.string().min(1, "Guest name is required"),
+  phone: z.string().min(1, "Phone number is required"),
+  roomId: z.coerce.number().min(1, "Please select a room"),
+  checkIn: z.date({ required_error: "Check-in date is required" }),
+  checkOut: z.date({ required_error: "Check-out date is required" }),
   status: z.string().default("reserved"),
   paymentStatus: z.string().default("Unpaid"),
+  notes: z.string().nullable().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
