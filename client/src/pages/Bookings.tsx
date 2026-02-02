@@ -127,101 +127,105 @@ export default function Bookings() {
             </div>
           </div>
 
-          <Table>
-            <TableHeader className="bg-slate-50">
-              <TableRow>
-                <TableHead>Guest Info</TableHead>
-                <TableHead>Stay Dates</TableHead>
-                <TableHead>Nights</TableHead>
-                <TableHead>Total Price</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">Loading bookings...</TableCell>
-                </TableRow>
-              ) : bookings?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
-                    No bookings found. Create one to get started.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                bookings?.map((booking) => {
-                  const checkIn = new Date(booking.checkIn);
-                  const checkOut = new Date(booking.checkOut);
-                  const nights = differenceInDays(checkOut, checkIn);
-                  
-                  return (
-                    <TableRow key={booking.id} className="hover:bg-slate-50/50">
-                      <TableCell>
-                        <div className="font-medium text-slate-900">{booking.guestName}</div>
-                        <div className="text-xs text-slate-500">Room {booking.room?.roomNumber} ({booking.room?.type})</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="w-3 h-3 text-slate-400" />
-                          <span>{format(checkIn, 'MMM d')} - {format(checkOut, 'MMM d, yyyy')}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm font-medium">
-                        {nights} {nights === 1 ? 'night' : 'nights'}
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-bold text-slate-900">
-                          {booking.room?.currency === 'USD' ? '$' : '₭'}
-                          {((booking.totalPrice || 0) / (booking.room?.currency === 'USD' ? 100 : 1)).toLocaleString()}
-                        </div>
-                        <Badge variant="outline" className={cn(
-                          "text-[10px] uppercase font-bold",
-                          booking.paymentStatus === 'Paid' ? "bg-green-50 text-green-600 border-green-200" : "bg-red-50 text-red-600 border-red-200"
-                        )}>
-                          {booking.paymentStatus}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={getStatusColor(checkIn, checkOut)}>
-                          {getStatusText(checkIn, checkOut)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-slate-500 hover:text-slate-900"
-                            onClick={() => setViewingInvoice(booking)}
-                            title="Invoice"
-                          >
-                            <Receipt className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-slate-500 hover:text-primary hover:bg-blue-50"
-                            onClick={() => setEditingBooking(booking)}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-slate-500 hover:text-red-600 hover:bg-red-50"
-                            onClick={() => setDeletingId(booking.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+          <div className="overflow-x-auto">
+            <div className="min-w-[800px] lg:min-w-0">
+              <Table>
+                <TableHeader className="bg-slate-50">
+                  <TableRow>
+                    <TableHead className="whitespace-nowrap">Guest Info</TableHead>
+                    <TableHead className="whitespace-nowrap">Stay Dates</TableHead>
+                    <TableHead className="whitespace-nowrap">Nights</TableHead>
+                    <TableHead className="whitespace-nowrap">Total Price</TableHead>
+                    <TableHead className="whitespace-nowrap">Status</TableHead>
+                    <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center">Loading bookings...</TableCell>
+                    </TableRow>
+                  ) : bookings?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                        No bookings found. Create one to get started.
                       </TableCell>
                     </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
+                  ) : (
+                    bookings?.map((booking) => {
+                      const checkIn = new Date(booking.checkIn);
+                      const checkOut = new Date(booking.checkOut);
+                      const nights = differenceInDays(checkOut, checkIn);
+                      
+                      return (
+                        <TableRow key={booking.id} className="hover:bg-slate-50/50">
+                          <TableCell className="whitespace-nowrap">
+                            <div className="font-medium text-slate-900">{booking.guestName}</div>
+                            <div className="text-xs text-slate-500">Room {booking.room?.roomNumber} ({booking.room?.type})</div>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <div className="flex items-center gap-2 text-sm">
+                              <Calendar className="w-3 h-3 text-slate-400" />
+                              <span>{format(checkIn, 'MMM d')} - {format(checkOut, 'MMM d, yyyy')}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm font-medium whitespace-nowrap">
+                            {nights} {nights === 1 ? 'night' : 'nights'}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <div className="font-bold text-slate-900">
+                              {booking.room?.currency === 'USD' ? '$' : '₭'}
+                              {((booking.totalPrice || 0) / (booking.room?.currency === 'USD' ? 100 : 1)).toLocaleString()}
+                            </div>
+                            <Badge variant="outline" className={cn(
+                              "text-[10px] uppercase font-bold",
+                              booking.paymentStatus === 'Paid' ? "bg-green-50 text-green-600 border-green-200" : "bg-red-50 text-red-600 border-red-200"
+                            )}>
+                              {booking.paymentStatus}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <Badge variant="outline" className={getStatusColor(checkIn, checkOut)}>
+                              {getStatusText(checkIn, checkOut)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right whitespace-nowrap">
+                            <div className="flex justify-end gap-1">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-slate-500 hover:text-slate-900"
+                                onClick={() => setViewingInvoice(booking)}
+                                title="Invoice"
+                              >
+                                <Receipt className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-slate-500 hover:text-primary hover:bg-blue-50"
+                                onClick={() => setEditingBooking(booking)}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-slate-500 hover:text-red-600 hover:bg-red-50"
+                                onClick={() => setDeletingId(booking.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
         </div>
 
         {/* Create Dialog */}
