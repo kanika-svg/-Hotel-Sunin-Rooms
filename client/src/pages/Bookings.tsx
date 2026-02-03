@@ -129,17 +129,17 @@ export default function Bookings() {
 
           <div className="overflow-x-auto">
             <div className="min-w-[800px] lg:min-w-0">
-              <Table>
-                <TableHeader className="bg-slate-50">
-                  <TableRow>
-                    <TableHead className="whitespace-nowrap">Guest Info</TableHead>
-                    <TableHead className="whitespace-nowrap">Stay Dates</TableHead>
-                    <TableHead className="whitespace-nowrap">Nights</TableHead>
-                    <TableHead className="whitespace-nowrap">Total Price</TableHead>
-                    <TableHead className="whitespace-nowrap">Status</TableHead>
-                    <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
+            <Table>
+              <TableHeader className="bg-slate-50">
+                <TableRow>
+                  <TableHead className="whitespace-nowrap px-4 py-3">Guest Info</TableHead>
+                  <TableHead className="whitespace-nowrap px-4 py-3">Stay Dates</TableHead>
+                  <TableHead className="whitespace-nowrap px-4 py-3">Nights</TableHead>
+                  <TableHead className="whitespace-nowrap px-4 py-3">Total Price</TableHead>
+                  <TableHead className="whitespace-nowrap px-4 py-3 hidden lg:table-cell">Status</TableHead>
+                  <TableHead className="text-right whitespace-nowrap px-4 py-3">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
@@ -159,20 +159,20 @@ export default function Bookings() {
                       
                       return (
                         <TableRow key={booking.id} className="hover:bg-slate-50/50">
-                          <TableCell className="whitespace-nowrap">
+                          <TableCell className="whitespace-nowrap px-4 py-4">
                             <div className="font-medium text-slate-900">{booking.guestName}</div>
                             <div className="text-xs text-slate-500">Room {booking.room?.roomNumber} ({booking.room?.type})</div>
                           </TableCell>
-                          <TableCell className="whitespace-nowrap">
+                          <TableCell className="whitespace-nowrap px-4 py-4">
                             <div className="flex items-center gap-2 text-sm">
                               <Calendar className="w-3 h-3 text-slate-400" />
                               <span>{format(checkIn, 'MMM d')} - {format(checkOut, 'MMM d, yyyy')}</span>
                             </div>
                           </TableCell>
-                          <TableCell className="text-sm font-medium whitespace-nowrap">
+                          <TableCell className="text-sm font-medium whitespace-nowrap px-4 py-4">
                             {nights} {nights === 1 ? 'night' : 'nights'}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap">
+                          <TableCell className="whitespace-nowrap px-4 py-4">
                             <div className="font-bold text-slate-900">
                               {booking.room?.currency === 'USD' ? '$' : '₭'}
                               {((booking.totalPrice || 0) / (booking.room?.currency === 'USD' ? 100 : 1)).toLocaleString()}
@@ -189,12 +189,12 @@ export default function Bookings() {
                               </Badge>
                             </div>
                           </TableCell>
-                          <TableCell className="whitespace-nowrap hidden lg:table-cell">
+                          <TableCell className="whitespace-nowrap px-4 py-4 hidden lg:table-cell">
                             <Badge variant="outline" className={getStatusColor(checkIn, checkOut)}>
                               {getStatusText(checkIn, checkOut)}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right whitespace-nowrap">
+                          <TableCell className="text-right whitespace-nowrap px-4 py-4">
                             <div className="flex justify-end gap-1">
                               <Button 
                                 variant="ghost" 
