@@ -177,14 +177,19 @@ export default function Bookings() {
                               {booking.room?.currency === 'USD' ? '$' : '₭'}
                               {((booking.totalPrice || 0) / (booking.room?.currency === 'USD' ? 100 : 1)).toLocaleString()}
                             </div>
-                            <Badge variant="outline" className={cn(
-                              "text-[10px] uppercase font-bold",
-                              booking.paymentStatus === 'Paid' ? "bg-green-50 text-green-600 border-green-200" : "bg-red-50 text-red-600 border-red-200"
-                            )}>
-                              {booking.paymentStatus}
-                            </Badge>
+                            <div className="flex flex-col gap-1 mt-1">
+                              <Badge variant="outline" className={cn(
+                                "text-[10px] uppercase font-bold w-fit",
+                                booking.paymentStatus === 'Paid' ? "bg-green-50 text-green-600 border-green-200" : "bg-red-50 text-red-600 border-red-200"
+                              )}>
+                                {booking.paymentStatus}
+                              </Badge>
+                              <Badge variant="outline" className={cn("text-[10px] uppercase font-bold w-fit lg:hidden", getStatusColor(checkIn, checkOut))}>
+                                {getStatusText(checkIn, checkOut)}
+                              </Badge>
+                            </div>
                           </TableCell>
-                          <TableCell className="whitespace-nowrap">
+                          <TableCell className="whitespace-nowrap hidden lg:table-cell">
                             <Badge variant="outline" className={getStatusColor(checkIn, checkOut)}>
                               {getStatusText(checkIn, checkOut)}
                             </Badge>
