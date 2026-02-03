@@ -137,7 +137,7 @@ export default function Bookings() {
                   <TableHead className="whitespace-nowrap px-4 py-3">Nights</TableHead>
                   <TableHead className="whitespace-nowrap px-4 py-3">Total Price</TableHead>
                   <TableHead className="whitespace-nowrap px-4 py-3 hidden lg:table-cell">Status</TableHead>
-                  <TableHead className="text-right whitespace-nowrap px-4 py-3">Actions</TableHead>
+                  <TableHead className="text-right whitespace-nowrap px-4 py-3 min-w-[160px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
                 <TableBody>
@@ -194,32 +194,34 @@ export default function Bookings() {
                               {getStatusText(checkIn, checkOut)}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right whitespace-nowrap px-4 py-4">
-                            <div className="flex justify-end gap-1">
+                          <TableCell className="text-right whitespace-nowrap px-4 py-4 min-w-[160px]">
+                            <div className="flex justify-end items-center gap-2">
                               <Button 
-                                variant="ghost" 
+                                variant="outline" 
                                 size="icon" 
-                                className="h-8 w-8 text-slate-500 hover:text-slate-900 lg:h-8 lg:w-8 h-9 w-9"
+                                className="h-12 w-12 flex-shrink-0 border-slate-200 bg-white shadow-sm active:scale-95 transition-transform"
                                 onClick={() => setViewingInvoice(booking)}
                                 title="Invoice"
                               >
-                                <Receipt className="w-4 h-4" />
+                                <Receipt className="w-6 h-6 text-slate-600" />
                               </Button>
                               <Button 
-                                variant="ghost" 
+                                variant="outline" 
                                 size="icon" 
-                                className="h-8 w-8 text-slate-500 hover:text-primary hover:bg-blue-50 lg:h-8 lg:w-8 h-9 w-9"
+                                className="h-12 w-12 flex-shrink-0 border-slate-200 bg-white shadow-sm active:scale-95 transition-transform text-primary"
                                 onClick={() => setEditingBooking(booking)}
+                                title="Edit"
                               >
-                                <Pencil className="w-4 h-4" />
+                                <Pencil className="w-6 h-6" />
                               </Button>
                               <Button 
-                                variant="ghost" 
+                                variant="outline" 
                                 size="icon" 
-                                className="h-8 w-8 text-slate-500 hover:text-red-600 hover:bg-red-50 lg:h-8 lg:w-8 h-9 w-9"
+                                className="h-12 w-12 flex-shrink-0 border-slate-200 bg-white shadow-sm active:scale-95 transition-transform text-red-600"
                                 onClick={() => setDeletingId(booking.id)}
+                                title="Delete"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-6 h-6" />
                               </Button>
                             </div>
                           </TableCell>
