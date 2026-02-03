@@ -199,7 +199,7 @@ export default function Bookings() {
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                className="h-8 w-8 text-slate-500 hover:text-slate-900"
+                                className="h-8 w-8 text-slate-500 hover:text-slate-900 lg:h-8 lg:w-8 h-9 w-9"
                                 onClick={() => setViewingInvoice(booking)}
                                 title="Invoice"
                               >
@@ -208,7 +208,7 @@ export default function Bookings() {
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                className="h-8 w-8 text-slate-500 hover:text-primary hover:bg-blue-50"
+                                className="h-8 w-8 text-slate-500 hover:text-primary hover:bg-blue-50 lg:h-8 lg:w-8 h-9 w-9"
                                 onClick={() => setEditingBooking(booking)}
                               >
                                 <Pencil className="w-4 h-4" />
@@ -216,7 +216,7 @@ export default function Bookings() {
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                className="h-8 w-8 text-slate-500 hover:text-red-600 hover:bg-red-50"
+                                className="h-8 w-8 text-slate-500 hover:text-red-600 hover:bg-red-50 lg:h-8 lg:w-8 h-9 w-9"
                                 onClick={() => setDeletingId(booking.id)}
                               >
                                 <Trash2 className="w-4 h-4" />
