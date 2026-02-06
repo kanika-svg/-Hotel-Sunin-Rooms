@@ -126,7 +126,8 @@ async function writeData(data: DataFile): Promise<void> {
   const dir = path.dirname(DATA_FILE);
   await fs.mkdir(dir, { recursive: true });
 
-  const tmpFile = DATA_FILE + ".tmp." + Date.now();
+  // Unique temp file so parallel writes (e.g. seed) don't clash
+  const tmpFile = DATA_FILE + ".tmp." + Date.now() + "." + Math.random().toString(36).slice(2);
   const json = JSON.stringify(serialized, null, 2);
   await fs.writeFile(tmpFile, json, "utf-8");
   await fs.rename(tmpFile, DATA_FILE);

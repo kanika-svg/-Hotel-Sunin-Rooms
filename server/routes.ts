@@ -242,21 +242,24 @@ export async function registerRoutes(
   return httpServer;
 }
 
-// Seed Function
+// Seed Function (sequential so file storage isn't written by multiple createRoom at once)
 async function seed() {
   const existingRooms = await storage.getRooms();
   if (existingRooms.length === 0) {
     console.log("Seeding database...");
     
-    // Create Rooms
-    const rooms = await Promise.all([
-      storage.createRoom({ roomNumber: "101", type: "Standard", price: 250000, status: "Available", currency: "Kip" }),
-      storage.createRoom({ roomNumber: "102", type: "Standard", price: 250000, status: "Available", currency: "Kip" }),
-      storage.createRoom({ roomNumber: "103", type: "Standard", price: 250000, status: "Maintenance", currency: "Kip" }),
-      storage.createRoom({ roomNumber: "201", type: "Deluxe", price: 450000, status: "Available", currency: "Kip" }),
-      storage.createRoom({ roomNumber: "202", type: "Deluxe", price: 450000, status: "Available", currency: "Kip" }),
-      storage.createRoom({ roomNumber: "301", type: "VIP", price: 850000, status: "Available", currency: "Kip" }),
-    ]);
+    const roomInputs = [
+      { roomNumber: "101", type: "Standard", price: 250000, status: "Available" as const, currency: "Kip" as const },
+      { roomNumber: "102", type: "Standard", price: 250000, status: "Available" as const, currency: "Kip" as const },
+      { roomNumber: "103", type: "Standard", price: 250000, status: "Maintenance" as const, currency: "Kip" as const },
+      { roomNumber: "201", type: "Deluxe", price: 450000, status: "Available" as const, currency: "Kip" as const },
+      { roomNumber: "202", type: "Deluxe", price: 450000, status: "Available" as const, currency: "Kip" as const },
+      { roomNumber: "301", type: "VIP", price: 850000, status: "Available" as const, currency: "Kip" as const },
+    ];
+    const rooms = [];
+    for (const input of roomInputs) {
+      rooms.push(await storage.createRoom(input));
+    }
 
     // Create some Bookings
     const today = new Date();
