@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
-import { apiUrl } from "@/lib/apiBase";
+import { apiUrl, getToken, setToken, clearToken, getAuthHeaders } from "@/lib/apiBase";
 
 export type AuthUser = { id: number; username: string; displayName?: string };
 
@@ -19,11 +19,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = useCallback(async () => {
     try {
-      const res = await fetch(apiUrl("/api/me"), { credentials: "include" });
+      const token = getToken();
+      if (!token) {
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+      const res = await fetch(apiUrl("/api/me"), {
+        headers: { ...getAuthHeaders() },
+      });
       if (res.ok) {
         const data = await res.json();
-        setUser(data);
+        setUser({ id: data.id, username: data.username, displayName: data.displayName });
       } else {
+        if (res.status === 401) clearToken();
         setUser(null);
       }
     } catch {
@@ -43,14 +52,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const res = await fetch(apiUrl("/api/login"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          credentials: "include",
           body: JSON.stringify({ username, password }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          return { ok: false, error: data.message || "Login failed" };
+          return { ok: false, error: (data as { message?: string }).message || "Login failed" };
         }
-        setUser(data);
+        if (data.token) setToken(data.token);
+        setUser({ id: data.id, username: data.username, displayName: data.displayName });
         return { ok: true };
       } catch {
         return { ok: false, error: "Network error" };
@@ -60,11 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-    try {
-      await fetch(apiUrl("/api/logout"), { method: "POST", credentials: "include" });
-    } finally {
-      setUser(null);
-    }
+    clearToken();
+    setUser(null);
   }, []);
 
   return (

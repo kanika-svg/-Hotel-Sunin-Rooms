@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { apiUrl } from "@/lib/apiBase";
+import { apiUrl, setToken } from "@/lib/apiBase";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -19,7 +19,7 @@ export default function Login() {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    fetch(apiUrl("/api/setup/status"), { credentials: "include" })
+    fetch(apiUrl("/api/setup/status"))
       .then((r) => r.json())
       .then((data) => setSetupMode(data.canCreateFirstUser === true))
       .catch(() => setSetupMode(false));
@@ -54,7 +54,6 @@ export default function Login() {
       const res = await fetch(apiUrl("/api/setup"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ username: username.trim(), password }),
       });
       const data = await res.json().catch(() => ({}));
@@ -63,6 +62,7 @@ export default function Login() {
         setSubmitting(false);
         return;
       }
+      if (data.token) setToken(data.token);
       await refreshAuth();
       setLocation("/");
     } catch {
@@ -192,7 +192,14 @@ export default function Login() {
                 />
               </div>
               {error && (
-                <p className="text-sm text-red-600 text-center">{error}</p>
+                <div className="text-center space-y-1">
+                  <p className="text-sm text-red-600">{error}</p>
+                  {error.toLowerCase().includes("network") && (
+                    <p className="text-xs text-slate-500">
+                      Ensure VITE_API_URL is set in Netlify and you triggered a new deploy after setting it.
+                    </p>
+                  )}
+                </div>
               )}
               <Button type="submit" className="w-full" disabled={submitting}>
                 {submitting ? "Signing in…" : "Sign in"}

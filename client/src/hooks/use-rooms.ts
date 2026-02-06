@@ -2,13 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import type { InsertRoom, UpdateRoomRequest } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { apiUrl } from "@/lib/apiBase";
+import { apiUrl, getAuthHeaders } from "@/lib/apiBase";
 
 export function useRooms() {
   return useQuery({
     queryKey: [api.rooms.list.path],
     queryFn: async () => {
-      const res = await fetch(apiUrl(api.rooms.list.path), { credentials: "include" });
+      const res = await fetch(apiUrl(api.rooms.list.path), { headers: getAuthHeaders() });
       if (!res.ok) throw new Error("Failed to fetch rooms");
       return api.rooms.list.responses[200].parse(await res.json());
     },
@@ -21,7 +21,7 @@ export function useRoom(id: number) {
     enabled: !!id,
     queryFn: async () => {
       const url = apiUrl(buildUrl(api.rooms.get.path, { id }));
-      const res = await fetch(url, { credentials: "include" });
+      const res = await fetch(url, { headers: getAuthHeaders() });
       if (res.status === 404) return null;
       if (!res.ok) throw new Error("Failed to fetch room");
       return api.rooms.get.responses[200].parse(await res.json());
@@ -37,9 +37,8 @@ export function useCreateRoom() {
     mutationFn: async (data: InsertRoom) => {
       const res = await fetch(apiUrl(api.rooms.create.path), {
         method: api.rooms.create.method,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify(data),
-        credentials: "include",
       });
       if (!res.ok) {
         const error = await res.json();
@@ -66,9 +65,8 @@ export function useUpdateRoom() {
       const url = apiUrl(buildUrl(api.rooms.update.path, { id }));
       const res = await fetch(url, {
         method: api.rooms.update.method,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify(updates),
-        credentials: "include",
       });
       if (!res.ok) {
         const error = await res.json();
@@ -93,7 +91,7 @@ export function useDeleteRoom() {
   return useMutation({
     mutationFn: async (id: number) => {
       const url = apiUrl(buildUrl(api.rooms.delete.path, { id }));
-      const res = await fetch(url, { method: api.rooms.delete.method, credentials: "include" });
+      const res = await fetch(url, { method: api.rooms.delete.method, headers: getAuthHeaders() });
       if (!res.ok) throw new Error("Failed to delete room");
     },
     onSuccess: () => {
