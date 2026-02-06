@@ -45,6 +45,11 @@ async function writeUsersFile(data: UsersFile): Promise<void> {
   await fs.writeFile(USERS_FILE, JSON.stringify(data, null, 2), "utf-8");
 }
 
+export async function hasAnyUser(): Promise<boolean> {
+  const data = await readUsersFile();
+  return data.users.length > 0;
+}
+
 export async function findUserByUsername(username: string): Promise<User | undefined> {
   const data = await readUsersFile();
   return data.users.find((u) => u.username.toLowerCase() === username.toLowerCase());

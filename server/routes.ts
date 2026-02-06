@@ -9,6 +9,8 @@ import {
   findUserByUsername,
   verifyPassword,
   toPublicUser,
+  createUser,
+  hasAnyUser,
 } from "./users";
 
 export async function registerRoutes(
@@ -46,6 +48,32 @@ export async function registerRoutes(
     req.session?.destroy(() => {});
     res.clearCookie("hotel_sunin_sid");
     res.status(200).json({ ok: true });
+  });
+
+  // === FIRST-TIME SETUP (only when no users exist) ===
+  app.get("/api/setup/status", async (_req, res) => {
+    const canCreateFirstUser = !(await hasAnyUser());
+    res.json({ canCreateFirstUser });
+  });
+
+  app.post("/api/setup", async (req, res) => {
+    if (await hasAnyUser()) {
+      return res.status(403).json({ message: "First user already exists. Sign in instead." });
+    }
+    const { username, password } = req.body ?? {};
+    if (!username || typeof username !== "string" || !username.trim()) {
+      return res.status(400).json({ message: "Username required" });
+    }
+    if (!password || typeof password !== "string" || password.length < 4) {
+      return res.status(400).json({ message: "Password required (at least 4 characters)" });
+    }
+    try {
+      const user = await createUser(username.trim(), password);
+      req.session!.user = toPublicUser(user);
+      res.status(201).json(req.session!.user);
+    } catch (err: any) {
+      return res.status(400).json({ message: err.message || "Failed to create account" });
+    }
   });
 
   // === ROOMS (protected) ===
