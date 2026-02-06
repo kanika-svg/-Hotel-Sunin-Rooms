@@ -27,6 +27,8 @@ export const bookings = pgTable("bookings", {
   totalPrice: integer("total_price").notNull().default(0),
   paymentStatus: text("payment_status").notNull().default("Unpaid"), // Paid, Unpaid
   invoiceNumber: text("invoice_number").unique(),
+  identification: text("identification"), // JSON array of base64 image strings (ID/passport photos)
+  discountAmount: integer("discount_amount").notNull().default(0), // discount in same units as price (Kip or cents)
 });
 
 // === RELATIONS ===
@@ -54,6 +56,8 @@ export const insertBookingSchema = createInsertSchema(bookings, {
   totalPrice: z.number().int().min(0),
   paymentStatus: z.string().default("Unpaid"),
   invoiceNumber: z.string().optional(),
+  identification: z.string().optional(),
+  discountAmount: z.number().int().min(0).optional(),
 }).omit({ id: true, createdAt: true });
 
 // === EXPLICIT API CONTRACT TYPES ===

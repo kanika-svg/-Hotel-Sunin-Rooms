@@ -1,7 +1,6 @@
-import { db } from "./db";
+import fs from "fs/promises";
+import path from "path";
 import {
-  rooms,
-  bookings,
   type Room,
   type InsertRoom,
   type Booking,
@@ -9,9 +8,8 @@ import {
   type DashboardStats,
   type Settings,
   type InsertSettings,
-  settings,
 } from "@shared/schema";
-import { eq, and, or, gte, lte, between, sql, not } from "drizzle-orm";
+import { getAppRoot } from "./appRoot";
 
 export interface IStorage {
   // Rooms
@@ -37,186 +35,378 @@ export interface IStorage {
   getDashboardStats(): Promise<DashboardStats>;
 }
 
-export class DatabaseStorage implements IStorage {
+// === FILE-BASED STORAGE IMPLEMENTATION ===
+
+type DataFile = {
+  rooms: Room[];
+  bookings: Booking[];
+  settings: Settings | null;
+  nextRoomId: number;
+  nextBookingId: number;
+  nextSettingsId: number;
+};
+
+const DATA_FILE =
+  process.env.HOTEL_SUNIN_DATA_DIR
+    ? path.join(process.env.HOTEL_SUNIN_DATA_DIR, "hotel-sunin-data.json")
+    : path.join(getAppRoot(), "hotel-sunin-data.json");
+
+const defaultData = (): DataFile => ({
+  rooms: [],
+  bookings: [],
+  settings: null,
+  nextRoomId: 1,
+  nextBookingId: 1,
+  nextSettingsId: 1,
+});
+
+async function readData(): Promise<DataFile> {
+  try {
+    const raw = await fs.readFile(DATA_FILE, "utf-8");
+    const parsed = JSON.parse(raw) as DataFile;
+
+    if (!parsed || typeof parsed !== "object") {
+      return defaultData();
+    }
+
+    if (!Array.isArray(parsed.rooms)) parsed.rooms = [];
+    if (!Array.isArray(parsed.bookings)) parsed.bookings = [];
+    if (parsed.nextRoomId == null) parsed.nextRoomId = 1;
+    if (parsed.nextBookingId == null) parsed.nextBookingId = 1;
+    if (parsed.nextSettingsId == null) parsed.nextSettingsId = 1;
+
+    // Ensure dates are proper Date instances
+    parsed.bookings = parsed.bookings.map((b) => ({
+      ...b,
+      checkIn:
+        typeof b.checkIn === "string" ? new Date(b.checkIn) : (b.checkIn as any),
+      checkOut:
+        typeof b.checkOut === "string"
+          ? new Date(b.checkOut)
+          : (b.checkOut as any),
+      createdAt:
+        b.createdAt && typeof b.createdAt === "string"
+          ? new Date(b.createdAt)
+          : (b.createdAt as any),
+    }));
+
+    return parsed;
+  } catch (err: any) {
+    if (err.code === "ENOENT") {
+      return defaultData();
+    }
+    if (err instanceof SyntaxError) {
+      try {
+        await fs.rename(DATA_FILE, DATA_FILE + ".corrupt." + Date.now());
+      } catch (_) {}
+      return defaultData();
+    }
+    throw err;
+  }
+}
+
+async function writeData(data: DataFile): Promise<void> {
+  const serialized: DataFile = {
+    ...data,
+    bookings: data.bookings.map((b) => ({
+      ...b,
+      checkIn: b.checkIn instanceof Date ? b.checkIn.toISOString() : (b.checkIn as any),
+      checkOut:
+        b.checkOut instanceof Date ? b.checkOut.toISOString() : (b.checkOut as any),
+      createdAt:
+        b.createdAt instanceof Date
+          ? b.createdAt.toISOString()
+          : (b.createdAt as any),
+    })) as any,
+  };
+
+  const dir = path.dirname(DATA_FILE);
+  await fs.mkdir(dir, { recursive: true });
+
+  const tmpFile = DATA_FILE + ".tmp." + Date.now();
+  const json = JSON.stringify(serialized, null, 2);
+  await fs.writeFile(tmpFile, json, "utf-8");
+  await fs.rename(tmpFile, DATA_FILE);
+}
+
+export class FileStorage implements IStorage {
   // === ROOMS ===
   async getRooms(): Promise<Room[]> {
-    return await db.select().from(rooms).orderBy(rooms.roomNumber);
+    const data = await readData();
+    return [...data.rooms].sort((a, b) =>
+      a.roomNumber.localeCompare(b.roomNumber),
+    );
   }
 
   async getRoom(id: number): Promise<Room | undefined> {
-    const [room] = await db.select().from(rooms).where(eq(rooms.id, id));
-    return room;
+    const data = await readData();
+    return data.rooms.find((r) => r.id === id);
   }
 
   async createRoom(room: InsertRoom): Promise<Room> {
-    const [newRoom] = await db.insert(rooms).values(room).returning();
+    const data = await readData();
+    const newRoom: Room = {
+      id: data.nextRoomId++,
+      roomNumber: room.roomNumber,
+      type: room.type,
+      status: room.status ?? "Available",
+      price: room.price ?? 0,
+      currency: room.currency ?? "Kip",
+    };
+    data.rooms.push(newRoom);
+    await writeData(data);
     return newRoom;
   }
 
   async updateRoom(id: number, updates: Partial<InsertRoom>): Promise<Room> {
-    const [updated] = await db.update(rooms).set(updates).where(eq(rooms.id, id)).returning();
+    const data = await readData();
+    const idx = data.rooms.findIndex((r) => r.id === id);
+    if (idx === -1) {
+      throw new Error("Room not found");
+    }
+    const updated: Room = {
+      ...data.rooms[idx],
+      ...updates,
+    };
+    data.rooms[idx] = updated;
+    await writeData(data);
     return updated;
   }
 
   async deleteRoom(id: number): Promise<void> {
-    await db.delete(rooms).where(eq(rooms.id, id));
+    const data = await readData();
+    data.rooms = data.rooms.filter((r) => r.id !== id);
+    // Also delete related bookings
+    data.bookings = data.bookings.filter((b) => b.roomId !== id);
+    await writeData(data);
   }
 
   // === BOOKINGS ===
-  async getBookings(params?: { from?: Date; to?: Date; roomId?: number }): Promise<(Booking & { room: Room })[]> {
-    const query = db
-      .select()
-      .from(bookings)
-      .innerJoin(rooms, eq(bookings.roomId, rooms.id));
+  async getBookings(params?: {
+    from?: Date;
+    to?: Date;
+    roomId?: number;
+  }): Promise<(Booking & { room: Room })[]> {
+    const data = await readData();
+    let filtered = [...data.bookings];
 
-    const conditions = [];
     if (params?.roomId) {
-      conditions.push(eq(bookings.roomId, params.roomId));
-    }
-    // Filter by date range if provided (find bookings that overlap with the range)
-    if (params?.from && params?.to) {
-      conditions.push(
-        or(
-          between(bookings.checkIn, params.from, params.to),
-          between(bookings.checkOut, params.from, params.to),
-          and(lte(bookings.checkIn, params.from), gte(bookings.checkOut, params.to))
-        )
-      );
+      filtered = filtered.filter((b) => b.roomId === params.roomId);
     }
 
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-    const results = await (whereClause ? query.where(whereClause) : query).orderBy(bookings.checkIn);
-    
-    // Transform result to match expected type structure: Booking & { room: Room }
-    return results.map(r => ({ ...r.bookings, room: r.rooms }));
+    if (params?.from && params?.to) {
+      const from = params.from;
+      const to = params.to;
+      filtered = filtered.filter((b) => {
+        const checkIn = new Date(b.checkIn);
+        const checkOut = new Date(b.checkOut);
+        return (
+          // booking.checkIn is between range
+          (checkIn >= from && checkIn <= to) ||
+          // booking.checkOut is between range
+          (checkOut >= from && checkOut <= to) ||
+          // booking fully covers the range
+          (checkIn <= from && checkOut >= to)
+        );
+      });
+    }
+
+    filtered.sort(
+      (a, b) =>
+        new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime(),
+    );
+
+    return filtered.map((b) => {
+      const room = data.rooms.find((r) => r.id === b.roomId)!;
+      return { ...b, room };
+    });
   }
 
-  async getBooking(id: number): Promise<(Booking & { room: Room }) | undefined> {
-    const result = await db
-      .select()
-      .from(bookings)
-      .innerJoin(rooms, eq(bookings.roomId, rooms.id))
-      .where(eq(bookings.id, id));
-    
-    if (result.length === 0) return undefined;
-    
-    return { ...result[0].bookings, room: result[0].rooms };
+  async getBooking(
+    id: number,
+  ): Promise<(Booking & { room: Room }) | undefined> {
+    const data = await readData();
+    const booking = data.bookings.find((b) => b.id === id);
+    if (!booking) return undefined;
+    const room = data.rooms.find((r) => r.id === booking.roomId)!;
+    return { ...booking, room };
   }
 
   async createBooking(booking: InsertBooking): Promise<Booking> {
-    // If totalPrice is 0, attempt to calculate it
-    let finalBooking = { ...booking };
-    if (!finalBooking.totalPrice || finalBooking.totalPrice === 0) {
-      const room = await this.getRoom(booking.roomId);
+    const data = await readData();
+
+    let totalPrice = booking.totalPrice ?? 0;
+    if (!totalPrice || totalPrice === 0) {
+      const room = data.rooms.find((r) => r.id === booking.roomId);
       if (room) {
         const checkIn = new Date(booking.checkIn);
         const checkOut = new Date(booking.checkOut);
-        const diffDays = Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 3600 * 24)));
-        finalBooking.totalPrice = diffDays * room.price;
+        const diffDays = Math.max(
+          1,
+          Math.ceil(
+            (checkOut.getTime() - checkIn.getTime()) / (1000 * 3600 * 24),
+          ),
+        );
+        totalPrice = diffDays * room.price;
       }
     }
-    const [newBooking] = await db.insert(bookings).values(finalBooking).returning();
+
+    const now = new Date();
+    const newBooking: Booking = {
+      id: data.nextBookingId++,
+      guestName: booking.guestName,
+      phone: booking.phone,
+      roomId: booking.roomId,
+      checkIn: booking.checkIn as any,
+      checkOut: booking.checkOut as any,
+      status: booking.status ?? "reserved",
+      notes: booking.notes ?? null,
+      createdAt: (booking as any).createdAt ?? now,
+      totalPrice,
+      paymentStatus: booking.paymentStatus ?? "Unpaid",
+      invoiceNumber: booking.invoiceNumber ?? null,
+      identification: (booking as any).identification ?? null,
+      discountAmount: (booking as any).discountAmount ?? 0,
+    };
+
+    data.bookings.push(newBooking);
+    await writeData(data);
     return newBooking;
   }
 
-  async updateBooking(id: number, updates: Partial<InsertBooking>): Promise<Booking> {
-    const [updated] = await db.update(bookings).set(updates).where(eq(bookings.id, id)).returning();
+  async updateBooking(
+    id: number,
+    updates: Partial<InsertBooking>,
+  ): Promise<Booking> {
+    const data = await readData();
+    const idx = data.bookings.findIndex((b) => b.id === id);
+    if (idx === -1) {
+      throw new Error("Booking not found");
+    }
+    const existing = data.bookings[idx];
+    const updated: Booking = {
+      ...existing,
+      ...updates,
+      checkIn: (updates.checkIn ?? existing.checkIn) as any,
+      checkOut: (updates.checkOut ?? existing.checkOut) as any,
+    };
+    data.bookings[idx] = updated;
+    await writeData(data);
     return updated;
   }
 
   async deleteBooking(id: number): Promise<void> {
-    await db.delete(bookings).where(eq(bookings.id, id));
+    const data = await readData();
+    data.bookings = data.bookings.filter((b) => b.id !== id);
+    await writeData(data);
   }
 
   // === SETTINGS ===
   async getSettings(): Promise<Settings> {
-    const [existing] = await db.select().from(settings);
-    if (existing) return existing;
-    
-    const [newSettings] = await db.insert(settings).values({
+    const data = await readData();
+    if (data.settings) return data.settings;
+
+    const defaultSettings: Settings = {
+      id: data.nextSettingsId++,
       hotelName: "Sunin Hotel",
       hotelAddress: "Vientiane, Lao PDR",
-      hotelPhone: "+856 20 1234 5678"
-    }).returning();
-    return newSettings;
+      hotelPhone: "+856 20 1234 5678",
+      hotelLogo: null,
+      taxRate: 0,
+    };
+    data.settings = defaultSettings;
+    await writeData(data);
+    return defaultSettings;
   }
 
   async updateSettings(updates: Partial<InsertSettings>): Promise<Settings> {
-    const existing = await this.getSettings();
-    const [updated] = await db.update(settings).set(updates).where(eq(settings.id, existing.id)).returning();
+    const data = await readData();
+    const current =
+      data.settings ??
+      (await this.getSettings()); // getSettings will also write defaults
+
+    const updated: Settings = {
+      ...current,
+      ...updates,
+    } as Settings;
+
+    data.settings = updated;
+    await writeData(data);
     return updated;
   }
 
   // === LOGIC ===
-  async checkAvailability(roomId: number, checkIn: Date, checkOut: Date, excludeBookingId?: number): Promise<boolean> {
-    // Check if any booking overlaps
-    // Overlap condition: (StartA <= EndB) and (EndA >= StartB)
-    const conditions = [
-      eq(bookings.roomId, roomId),
-      // Booking CheckIn is before requested CheckOut
-      lte(bookings.checkIn, checkOut),
-      // Booking CheckOut is after requested CheckIn
-      gte(bookings.checkOut, checkIn),
-    ];
+  /** Normalize to start of day (date-only) so time components don't affect overlap. */
+  private static startOfDay(d: Date): Date {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
 
-    if (excludeBookingId) {
-      conditions.push(not(eq(bookings.id, excludeBookingId)));
-    }
+  async checkAvailability(
+    roomId: number,
+    checkIn: Date,
+    checkOut: Date,
+    excludeBookingId?: number,
+  ): Promise<boolean> {
+    const data = await readData();
+    const from = FileStorage.startOfDay(new Date(checkIn));
+    const to = FileStorage.startOfDay(new Date(checkOut));
 
-    const conflicting = await db
-      .select()
-      .from(bookings)
-      .where(and(...conditions));
+    const conflicting = data.bookings.filter((b) => {
+      if (b.roomId !== roomId) return false;
+      if (excludeBookingId && b.id === excludeBookingId) return false;
+
+      const existingStart = FileStorage.startOfDay(new Date(b.checkIn));
+      const existingEnd = FileStorage.startOfDay(new Date(b.checkOut));
+
+      // Check-out day is exclusive: guest leaves that morning, room free for same-day check-in.
+      // Stays are [start, end) so overlap when: existingStart < to && existingEnd > from
+      return existingStart.getTime() < to.getTime() && existingEnd.getTime() > from.getTime();
+    });
 
     return conflicting.length === 0;
   }
 
   async getDashboardStats(): Promise<DashboardStats> {
+    const data = await readData();
     const today = new Date();
-    // Reset time to start of day for accurate comparison
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    const startOfDay = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+    );
+    const endOfDay = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate() + 1,
+    );
 
-    // Get all rooms count
-    const allRooms = await this.getRooms();
-    const totalRooms = allRooms.length;
+    const totalRooms = data.rooms.length;
 
-    // Get active bookings for today
-    const activeBookings = await db
-      .select()
-      .from(bookings)
-      .where(
-        and(
-          lte(bookings.checkIn, endOfDay),
-          gte(bookings.checkOut, startOfDay)
-        )
-      );
+    const activeBookings = data.bookings.filter((b) => {
+      const checkIn = new Date(b.checkIn);
+      const checkOut = new Date(b.checkOut);
+      return checkIn <= endOfDay && checkOut >= startOfDay;
+    });
 
-    // Check-ins today
-    const checkIns = activeBookings.filter(b => 
-      b.checkIn >= startOfDay && b.checkIn < endOfDay
-    ).length;
+    const checkInsToday = data.bookings.filter((b) => {
+      const checkIn = new Date(b.checkIn);
+      return checkIn >= startOfDay && checkIn < endOfDay;
+    }).length;
 
-    // Check-outs today
-    const checkOuts = activeBookings.filter(b => 
-      b.checkOut >= startOfDay && b.checkOut < endOfDay
-    ).length;
-    
-    // Occupied rooms (currently active, not just checking in/out)
-    // A room is occupied if checkIn <= Now < checkOut
-    // But for "Today's stats", usually implies "staying over tonight" or "occupied at some point today"
-    // Let's go with "Occupied tonight" -> checkIn <= Today AND checkOut > Today
-    const occupied = activeBookings.filter(b => 
-       b.checkIn <= endOfDay && b.checkOut >= startOfDay
-    ).length;
+    const checkOutsToday = data.bookings.filter((b) => {
+      const checkOut = new Date(b.checkOut);
+      return checkOut >= startOfDay && checkOut < endOfDay;
+    }).length;
+
+    const occupied = activeBookings.length;
 
     return {
       totalOccupied: occupied,
-      checkInsToday: checkIns,
-      checkOutsToday: checkOuts,
+      checkInsToday,
+      checkOutsToday,
       availableRooms: totalRooms - occupied,
     };
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new FileStorage();

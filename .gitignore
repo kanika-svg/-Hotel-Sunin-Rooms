@@ -4,3 +4,22 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Env and local data (do not commit)
+.env
+.env.*
+!.env.example
+hotel-sunin-data.json
+users.json
+
+# IDE and local
+.local/
+.vscode/
+
+# Build outputs and executables
+release/
+release-build/
+release-build-2/
+*.exe
+*.vbs
+*.cmd

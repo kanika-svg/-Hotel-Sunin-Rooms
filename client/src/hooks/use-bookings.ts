@@ -16,7 +16,7 @@ export function useBookings(params?: { search?: string; from?: string; to?: stri
           if (value !== undefined) url.searchParams.append(key, String(value));
         });
       }
-      const res = await fetch(url.toString());
+      const res = await fetch(url.toString(), { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch bookings");
       return api.bookings.list.responses[200].parse(await res.json());
     },
@@ -29,7 +29,7 @@ export function useBooking(id: number) {
     enabled: !!id,
     queryFn: async () => {
       const url = buildUrl(api.bookings.get.path, { id });
-      const res = await fetch(url);
+      const res = await fetch(url, { credentials: "include" });
       if (res.status === 404) return null;
       if (!res.ok) throw new Error("Failed to fetch booking");
       return api.bookings.get.responses[200].parse(await res.json());
@@ -47,6 +47,7 @@ export function useCreateBooking() {
         method: api.bookings.create.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
+        credentials: "include",
       });
       if (!res.ok) {
         const error = await res.json();
@@ -77,6 +78,7 @@ export function useUpdateBooking() {
         method: api.bookings.update.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
+        credentials: "include",
       });
       if (!res.ok) {
         const error = await res.json();
@@ -102,7 +104,7 @@ export function useDeleteBooking() {
   return useMutation({
     mutationFn: async (id: number) => {
       const url = buildUrl(api.bookings.delete.path, { id });
-      const res = await fetch(url, { method: api.bookings.delete.method });
+      const res = await fetch(url, { method: api.bookings.delete.method, credentials: "include" });
       if (!res.ok) throw new Error("Failed to delete booking");
     },
     onSuccess: () => {
@@ -120,7 +122,7 @@ export function useDashboardStats() {
   return useQuery({
     queryKey: [api.dashboard.stats.path],
     queryFn: async () => {
-      const res = await fetch(api.dashboard.stats.path);
+      const res = await fetch(api.dashboard.stats.path, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch stats");
       return api.dashboard.stats.responses[200].parse(await res.json());
     },

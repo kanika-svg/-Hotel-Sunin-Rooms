@@ -1,24 +1,14 @@
 import { useDashboardStats, useBookings } from "@/hooks/use-bookings";
-import { Sidebar } from "@/components/Sidebar";
-import { StatCard } from "@/components/StatCard";
-import { 
-  Users, 
-  BedDouble, 
-  LogIn, 
+import {
+  Users,
+  BedDouble,
+  LogIn,
   LogOut,
-  MoreHorizontal,
-  CalendarDays
+  CalendarDays,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useLocation } from "wouter";
 
 export default function Dashboard() {
@@ -29,24 +19,23 @@ export default function Dashboard() {
   const displayedBookings = recentBookings?.slice(0, 5) || [];
 
   return (
-    <div className="flex min-h-screen bg-slate-900 relative overflow-hidden">
-      <div className="absolute inset-0 bg-dashboard-full z-0 opacity-60 bg-[length:100%_100%] bg-no-repeat" />
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 via-slate-900/40 to-slate-900/20 z-0" />
-      <Sidebar />
-      <main className="flex-1 lg:ml-64 p-4 lg:p-8 animate-in relative z-10 pt-20 lg:pt-8">
-        <header className="flex justify-between items-center mb-8">
+    <div className="p-4 lg:p-8 animate-in">
+      <header className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-display font-bold text-white">Sunin Hotel</h1>
             <p className="text-slate-200 mt-1">Welcome back, here's what's happening today.</p>
           </div>
-          <Button onClick={() => setLocation("/bookings")} className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
+          <Button
+            onClick={() => setLocation("/bookings")}
+            className="rounded-xl bg-gradient-to-r from-slate-800/90 to-slate-900/90 border border-white/20 text-white hover:from-slate-700/95 hover:to-slate-800/95 hover:border-white/30 shadow-lg backdrop-blur-sm"
+          >
             View All Bookings
           </Button>
         </header>
 
-        {/* Stats Grid */}
+        {/* Stats Grid - no backdrop-blur to prevent darkening repaint */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-slate-900/40 backdrop-blur-md p-6 rounded-2xl shadow-2xl border border-white/10 group hover:bg-slate-900/60 transition-all">
+          <div className="bg-slate-900/40 p-6 rounded-2xl shadow-2xl border border-white/10">
             <div className="flex items-center justify-between mb-4">
               <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400">
                 <Users className="w-5 h-5" />
@@ -57,7 +46,7 @@ export default function Dashboard() {
             <p className="text-slate-400 text-sm">Total Occupied</p>
           </div>
 
-          <div className="bg-slate-900/40 backdrop-blur-md p-6 rounded-2xl shadow-2xl border border-white/10 group hover:bg-slate-900/60 transition-all">
+          <div className="bg-slate-900/40 p-6 rounded-2xl shadow-2xl border border-white/10">
             <div className="flex items-center justify-between mb-4">
               <div className="p-2 bg-green-500/20 rounded-lg text-green-400">
                 <BedDouble className="w-5 h-5" />
@@ -68,7 +57,7 @@ export default function Dashboard() {
             <p className="text-slate-400 text-sm">Available Rooms</p>
           </div>
 
-          <div className="bg-slate-900/40 backdrop-blur-md p-6 rounded-2xl shadow-2xl border border-white/10 group hover:bg-slate-900/60 transition-all">
+          <div className="bg-slate-900/40 p-6 rounded-2xl shadow-2xl border border-white/10">
             <div className="flex items-center justify-between mb-4">
               <div className="p-2 bg-orange-500/20 rounded-lg text-orange-400">
                 <LogIn className="w-5 h-5" />
@@ -79,7 +68,7 @@ export default function Dashboard() {
             <p className="text-slate-400 text-sm">Check-ins Today</p>
           </div>
 
-          <div className="bg-slate-900/40 backdrop-blur-md p-6 rounded-2xl shadow-2xl border border-white/10 group hover:bg-slate-900/60 transition-all">
+          <div className="bg-slate-900/40 p-6 rounded-2xl shadow-2xl border border-white/10">
             <div className="flex items-center justify-between mb-4">
               <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400">
                 <LogOut className="w-5 h-5" />
@@ -94,7 +83,7 @@ export default function Dashboard() {
         {/* Recent Activity Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <div className="bg-slate-900/40 backdrop-blur-md rounded-2xl shadow-2xl border border-white/10 overflow-hidden">
+            <div className="bg-slate-900/40 rounded-2xl shadow-2xl border border-white/10 overflow-hidden">
               <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
                 <h2 className="text-xl font-bold text-white font-display">Recent Bookings</h2>
                 <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white hover:bg-white/10" onClick={() => setLocation("/bookings")}>View All</Button>
@@ -113,13 +102,16 @@ export default function Dashboard() {
                         </div>
                         <div>
                           <p className="font-medium text-white">{booking.guestName}</p>
-                          <p className="text-xs text-slate-400">Room {booking.room?.roomNumber} • {booking.room?.type}</p>
+                          <p className="text-xs text-slate-300">Room {booking.room?.roomNumber} • {booking.room?.type}</p>
+                          {booking.createdAt && (
+                            <p className="text-xs text-slate-200 mt-0.5">Booked {format(new Date(booking.createdAt), "MMM d, yyyy 'at' h:mm a")}</p>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-6">
                         <div className="text-right hidden sm:block">
                           <p className="text-xs font-medium text-white">{format(new Date(booking.checkIn), 'MMM d, yyyy')}</p>
-                          <p className="text-xs text-slate-400">Check-in</p>
+                          <p className="text-xs text-slate-300">Check-in</p>
                         </div>
                         <Badge variant="outline" className="bg-white/5 border-white/10 text-slate-300">
                           {new Date() >= new Date(booking.checkIn) && new Date() <= new Date(booking.checkOut) 
@@ -136,33 +128,43 @@ export default function Dashboard() {
           </div>
 
           <div>
-            <div className="bg-slate-900/60 backdrop-blur-md rounded-2xl shadow-2xl border border-white/10 h-full text-white relative overflow-hidden p-6">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+            <div className="bg-slate-900/40 rounded-2xl shadow-2xl border border-white/10 h-full overflow-hidden p-6">
               <h2 className="text-xl font-bold text-white font-display mb-6">Quick Actions</h2>
-              <div className="space-y-4 relative z-10">
-                <Button 
-                  onClick={() => setLocation("/bookings")} 
-                  className="w-full justify-start bg-white/10 hover:bg-white/20 text-white border border-white/10 h-12"
+              <div className="space-y-4">
+                <button
+                  type="button"
+                  onClick={() => setLocation("/bookings")}
+                  className="w-full flex items-center justify-start bg-white/10 hover:bg-white/20 text-white border border-white/10 h-12 rounded-lg px-4 transition-colors"
                 >
-                  <Users className="mr-2 h-4 w-4 text-blue-400" /> New Booking
-                </Button>
-                <Button 
-                  onClick={() => setLocation("/rooms")} 
-                  className="w-full justify-start bg-white/10 hover:bg-white/20 text-white border border-white/10 h-12"
+                  <div className="p-1.5 rounded-lg bg-blue-500/20 mr-3">
+                    <Users className="h-4 w-4 text-blue-400" />
+                  </div>
+                  New Booking
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLocation("/rooms")}
+                  className="w-full flex items-center justify-start bg-white/10 hover:bg-white/20 text-white border border-white/10 h-12 rounded-lg px-4 transition-colors"
                 >
-                  <BedDouble className="mr-2 h-4 w-4 text-green-400" /> Manage Rooms
-                </Button>
-                <Button 
-                  onClick={() => setLocation("/calendar")} 
-                  className="w-full justify-start bg-white/10 hover:bg-white/20 text-white border border-white/10 h-12"
+                  <div className="p-1.5 rounded-lg bg-green-500/20 mr-3">
+                    <BedDouble className="h-4 w-4 text-green-400" />
+                  </div>
+                  Manage Rooms
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLocation("/calendar")}
+                  className="w-full flex items-center justify-start bg-white/10 hover:bg-white/20 text-white border border-white/10 h-12 rounded-lg px-4 transition-colors"
                 >
-                  <CalendarDays className="mr-2 h-4 w-4 text-amber-400" /> View Calendar
-                </Button>
+                  <div className="p-1.5 rounded-lg bg-purple-500/20 mr-3">
+                    <CalendarDays className="h-4 w-4 text-purple-400" />
+                  </div>
+                  View Calendar
+                </button>
               </div>
             </div>
           </div>
         </div>
-      </main>
     </div>
   );
 }

@@ -3,20 +3,58 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
-import { differenceInDays } from "date-fns";
+import { differenceInDays, startOfDay } from "date-fns";
+import { requireAuth } from "./auth";
+import {
+  findUserByUsername,
+  verifyPassword,
+  toPublicUser,
+} from "./users";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  
-  // === ROOMS ===
-  app.get(api.rooms.list.path, async (req, res) => {
+  // Readiness check for Electron: only this instance knows this token
+  app.get("/api/ready", (_req, res) => {
+    const token = process.env.HOTEL_SUNIN_READINESS_TOKEN;
+    res.json({ ok: true, token: token ?? null });
+  });
+
+  // === AUTH (public) ===
+  app.get("/api/me", (req, res) => {
+    if (req.session?.user) {
+      return res.json(req.session.user);
+    }
+    res.status(401).json({ message: "Not authenticated" });
+  });
+
+  app.post("/api/login", async (req, res) => {
+    const { username, password } = req.body ?? {};
+    if (!username || typeof password !== "string") {
+      return res.status(400).json({ message: "Username and password required" });
+    }
+    const user = await findUserByUsername(username);
+    if (!user || !(await verifyPassword(user, password))) {
+      return res.status(401).json({ message: "Invalid username or password" });
+    }
+    req.session!.user = toPublicUser(user);
+    res.json(req.session!.user);
+  });
+
+  app.post("/api/logout", (req, res) => {
+    req.session?.destroy(() => {});
+    res.clearCookie("hotel_sunin_sid");
+    res.status(200).json({ ok: true });
+  });
+
+  // === ROOMS (protected) ===
+  app.get(api.rooms.list.path, requireAuth, async (req, res) => {
     const rooms = await storage.getRooms();
     res.json(rooms);
   });
 
-  app.get(api.rooms.get.path, async (req, res) => {
+  app.get(api.rooms.get.path, requireAuth, async (req, res) => {
     const room = await storage.getRoom(Number(req.params.id));
     if (!room) {
       return res.status(404).json({ message: 'Room not found' });
@@ -24,7 +62,7 @@ export async function registerRoutes(
     res.json(room);
   });
 
-  app.post(api.rooms.create.path, async (req, res) => {
+  app.post(api.rooms.create.path, requireAuth, async (req, res) => {
     try {
       const input = api.rooms.create.input.parse(req.body);
       const room = await storage.createRoom(input);
@@ -40,7 +78,7 @@ export async function registerRoutes(
     }
   });
 
-  app.put(api.rooms.update.path, async (req, res) => {
+  app.put(api.rooms.update.path, requireAuth, async (req, res) => {
     try {
       const input = api.rooms.update.input.parse(req.body);
       const updated = await storage.updateRoom(Number(req.params.id), input);
@@ -55,13 +93,13 @@ export async function registerRoutes(
     }
   });
 
-  app.delete(api.rooms.delete.path, async (req, res) => {
+  app.delete(api.rooms.delete.path, requireAuth, async (req, res) => {
     await storage.deleteRoom(Number(req.params.id));
     res.status(204).send();
   });
 
-  // === BOOKINGS ===
-  app.get(api.bookings.list.path, async (req, res) => {
+  // === BOOKINGS (protected) ===
+  app.get(api.bookings.list.path, requireAuth, async (req, res) => {
     const input = api.bookings.list.input?.parse(req.query);
     const bookings = await storage.getBookings({
       from: input?.from ? new Date(input.from) : undefined,
@@ -71,7 +109,7 @@ export async function registerRoutes(
     res.json(bookings);
   });
 
-  app.get(api.bookings.get.path, async (req, res) => {
+  app.get(api.bookings.get.path, requireAuth, async (req, res) => {
     const booking = await storage.getBooking(Number(req.params.id));
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
@@ -79,7 +117,7 @@ export async function registerRoutes(
     res.json(booking);
   });
 
-  app.post(api.bookings.create.path, async (req, res) => {
+  app.post(api.bookings.create.path, requireAuth, async (req, res) => {
     try {
       // Coerce dates before validation if they are strings
       const body = { ...req.body };
@@ -93,7 +131,7 @@ export async function registerRoutes(
       if (!totalPrice) {
         const room = await storage.getRoom(input.roomId);
         if (room) {
-          const nights = Math.max(1, differenceInDays(new Date(input.checkOut), new Date(input.checkIn)));
+          const nights = Math.max(1, differenceInDays(startOfDay(new Date(input.checkOut)), startOfDay(new Date(input.checkIn))));
           totalPrice = nights * room.price;
         }
       }
@@ -131,7 +169,7 @@ export async function registerRoutes(
     }
   });
 
-  app.put(api.bookings.update.path, async (req, res) => {
+  app.put(api.bookings.update.path, requireAuth, async (req, res) => {
     try {
       const id = Number(req.params.id);
       
@@ -179,24 +217,24 @@ export async function registerRoutes(
     }
   });
 
-  app.delete(api.bookings.delete.path, async (req, res) => {
+  app.delete(api.bookings.delete.path, requireAuth, async (req, res) => {
     await storage.deleteBooking(Number(req.params.id));
     res.status(204).send();
   });
 
-  // === DASHBOARD ===
-  app.get(api.dashboard.stats.path, async (req, res) => {
+  // === DASHBOARD (protected) ===
+  app.get(api.dashboard.stats.path, requireAuth, async (req, res) => {
     const stats = await storage.getDashboardStats();
     res.json(stats);
   });
 
-  // === SETTINGS ===
-  app.get("/api/settings", async (req, res) => {
+  // === SETTINGS (protected) ===
+  app.get("/api/settings", requireAuth, async (req, res) => {
     const s = await storage.getSettings();
     res.json(s);
   });
 
-  app.patch("/api/settings", async (req, res) => {
+  app.patch("/api/settings", requireAuth, async (req, res) => {
     const updated = await storage.updateSettings(req.body);
     res.json(updated);
   });

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Sidebar } from "@/components/Sidebar";
 import { useRooms, useCreateRoom, useUpdateRoom, useDeleteRoom } from "@/hooks/use-rooms";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -75,17 +74,16 @@ export default function Rooms() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-900 relative overflow-hidden">
-      <div className="absolute inset-0 bg-rooms-full z-0 opacity-40 bg-[length:100%_100%] bg-no-repeat" />
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-slate-900/60 z-0" />
-      <Sidebar />
-      <main className="flex-1 lg:ml-64 p-4 lg:p-8 animate-in relative z-10 text-white pt-20 lg:pt-8">
-        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+    <div className="p-4 lg:p-8 animate-in text-white">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-display font-bold text-white">Rooms</h1>
             <p className="text-slate-300 mt-1">Manage your hotel's inventory and status.</p>
           </div>
-          <Button onClick={() => setIsCreateOpen(true)} className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
+          <Button
+            onClick={() => setIsCreateOpen(true)}
+            className="rounded-xl bg-gradient-to-r from-slate-800/90 to-slate-900/90 border border-white/20 text-white hover:from-slate-700/95 hover:to-slate-800/95 hover:border-white/30 shadow-lg backdrop-blur-sm"
+          >
             <Plus className="w-4 h-4 mr-2" /> Add Room
           </Button>
         </header>
@@ -188,7 +186,6 @@ export default function Rooms() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </main>
     </div>
   );
 }

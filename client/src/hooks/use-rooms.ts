@@ -7,7 +7,7 @@ export function useRooms() {
   return useQuery({
     queryKey: [api.rooms.list.path],
     queryFn: async () => {
-      const res = await fetch(api.rooms.list.path);
+      const res = await fetch(api.rooms.list.path, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch rooms");
       return api.rooms.list.responses[200].parse(await res.json());
     },
@@ -20,7 +20,7 @@ export function useRoom(id: number) {
     enabled: !!id,
     queryFn: async () => {
       const url = buildUrl(api.rooms.get.path, { id });
-      const res = await fetch(url);
+      const res = await fetch(url, { credentials: "include" });
       if (res.status === 404) return null;
       if (!res.ok) throw new Error("Failed to fetch room");
       return api.rooms.get.responses[200].parse(await res.json());
@@ -38,6 +38,7 @@ export function useCreateRoom() {
         method: api.rooms.create.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
+        credentials: "include",
       });
       if (!res.ok) {
         const error = await res.json();
@@ -66,6 +67,7 @@ export function useUpdateRoom() {
         method: api.rooms.update.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
+        credentials: "include",
       });
       if (!res.ok) {
         const error = await res.json();
@@ -90,7 +92,7 @@ export function useDeleteRoom() {
   return useMutation({
     mutationFn: async (id: number) => {
       const url = buildUrl(api.rooms.delete.path, { id });
-      const res = await fetch(url, { method: api.rooms.delete.method });
+      const res = await fetch(url, { method: api.rooms.delete.method, credentials: "include" });
       if (!res.ok) throw new Error("Failed to delete room");
     },
     onSuccess: () => {

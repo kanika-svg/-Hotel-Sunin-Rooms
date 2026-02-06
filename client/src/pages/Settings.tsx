@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Sidebar } from "@/components/Sidebar";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -41,19 +40,17 @@ export default function Settings() {
     }
   };
 
-  if (isLoading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin" /></div>;
+  if (isLoading) return <div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="w-8 h-8 animate-spin text-white" /></div>;
 
   return (
-    <div className="flex min-h-screen bg-slate-50 relative overflow-hidden">
-      <Sidebar />
-      <main className="flex-1 lg:ml-64 p-4 lg:p-8 relative z-10 pt-20 lg:pt-8">
-        <header className="mb-8">
-          <h1 className="text-3xl font-display font-bold text-slate-900">Settings</h1>
-          <p className="text-slate-500 mt-1">Manage your hotel's branding and information.</p>
-        </header>
+    <div className="p-4 lg:p-8">
+      <header className="mb-8">
+        <h1 className="text-3xl font-display font-bold text-white">Settings</h1>
+        <p className="text-slate-200 mt-1">Manage your hotel's branding and information.</p>
+      </header>
 
-        <div className="max-w-2xl space-y-6">
-          <Card>
+      <div className="max-w-2xl space-y-6">
+        <Card className="bg-white/95 backdrop-blur-sm border-white/20">
             <CardHeader>
               <CardTitle>Hotel Information</CardTitle>
               <CardDescription>This information will appear on all invoices.</CardDescription>
@@ -93,7 +90,7 @@ export default function Settings() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-white/95 backdrop-blur-sm border-white/20">
             <CardHeader>
               <CardTitle>Company Logo</CardTitle>
               <CardDescription>Upload your hotel logo for invoices and receipts.</CardDescription>
@@ -132,8 +129,7 @@ export default function Settings() {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </main>
+      </div>
     </div>
   );
 }

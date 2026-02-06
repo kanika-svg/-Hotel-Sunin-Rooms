@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { Sidebar } from "@/components/Sidebar";
+import { useState, useRef, useEffect } from "react";
+import { useSearch } from "wouter";
 import { useBookings, useDeleteBooking } from "@/hooks/use-bookings";
 import { BookingForm } from "@/components/BookingForm";
 import {
@@ -45,6 +45,11 @@ export default function Bookings() {
   const [editingBooking, setEditingBooking] = useState<any>(null);
   const [viewingInvoice, setViewingInvoice] = useState<Booking & { room: Room } | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const searchString = useSearch();
+  useEffect(() => {
+    if (searchString.includes("new=1")) setIsCreateOpen(true);
+  }, [searchString]);
 
   const handleDelete = async () => {
     if (deletingId) {
@@ -95,26 +100,31 @@ export default function Bookings() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 relative overflow-hidden">
-      <div className="absolute inset-0 bg-hotel-fade z-0" />
-      <Sidebar />
-      <main className="flex-1 lg:ml-64 p-4 lg:p-8 animate-in relative z-10 pt-20 lg:pt-8">
-        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-display font-bold text-slate-900">Bookings</h1>
-            <p className="text-slate-500 mt-1">Manage guest reservations and check-ins.</p>
-          </div>
+    <div className="p-4 lg:p-8 animate-in">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-display font-bold text-white">Bookings</h1>
+          <p className="text-slate-200 mt-1">Manage guest reservations and check-ins.</p>
+        </div>
           <div className="flex gap-3">
-            <Button variant="outline" onClick={exportToCSV} disabled={!bookings?.length}>
+            <Button
+              variant="outline"
+              onClick={exportToCSV}
+              disabled={!bookings?.length}
+              className="rounded-xl bg-gradient-to-r from-slate-800/80 to-slate-900/80 border border-white/20 text-white hover:from-slate-700/90 hover:to-slate-800/90 hover:border-white/30 hover:text-white backdrop-blur-sm shadow-lg"
+            >
               <Download className="w-4 h-4 mr-2" /> Export CSV
             </Button>
-            <Button onClick={() => setIsCreateOpen(true)} className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
+            <Button
+              onClick={() => setIsCreateOpen(true)}
+              className="rounded-xl bg-gradient-to-r from-slate-800/90 to-slate-900/90 border border-white/20 text-white hover:from-slate-700/95 hover:to-slate-800/95 hover:border-white/30 shadow-lg backdrop-blur-sm"
+            >
               <Plus className="w-4 h-4 mr-2" /> New Booking
             </Button>
           </div>
         </header>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 overflow-hidden">
           <div className="p-4 border-b border-slate-200 flex gap-4">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -127,8 +137,71 @@ export default function Bookings() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <div className="min-w-[800px] lg:min-w-0">
+          {/* Mobile card list (below lg) */}
+          <div className="lg:hidden p-4 space-y-4">
+            {isLoading ? (
+              <div className="h-24 flex items-center justify-center text-slate-500">Loading bookings...</div>
+            ) : bookings?.length === 0 ? (
+              <div className="h-32 flex items-center justify-center text-slate-500 text-center">No bookings found. Create one to get started.</div>
+            ) : (
+              bookings?.map((booking) => {
+                const checkIn = new Date(booking.checkIn);
+                const checkOut = new Date(booking.checkOut);
+                const nights = differenceInDays(checkOut, checkIn);
+                return (
+                  <div key={booking.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex flex-col gap-3">
+                      <div>
+                        <div className="font-medium text-slate-900">{booking.guestName}</div>
+                        <div className="text-xs text-slate-500">Room {booking.room?.roomNumber} · {booking.room?.type}</div>
+                        {booking.createdAt && (
+                          <div className="text-xs text-slate-400 mt-0.5">
+                            Booked {format(new Date(booking.createdAt), "MMM d, yyyy 'at' h:mm a")}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span>{format(checkIn, 'MMM d')} – {format(checkOut, 'MMM d, yyyy')}</span>
+                        <span className="text-slate-400">·</span>
+                        <span>{nights} {nights === 1 ? 'night' : 'nights'}</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-bold text-slate-900">
+                          {booking.room?.currency === 'USD' ? '$' : '₭'}
+                          {((booking.totalPrice || 0) / (booking.room?.currency === 'USD' ? 100 : 1)).toLocaleString()}
+                        </span>
+                        <Badge variant="outline" className={cn(
+                          "text-[10px] uppercase font-bold w-fit",
+                          booking.paymentStatus === 'Paid' ? "bg-green-50 text-green-600 border-green-200" : "bg-red-50 text-red-600 border-red-200"
+                        )}>
+                          {booking.paymentStatus}
+                        </Badge>
+                        <Badge variant="outline" className={cn("text-[10px] uppercase font-bold w-fit", getStatusColor(checkIn, checkOut))}>
+                          {getStatusText(checkIn, checkOut)}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-end gap-2 pt-1">
+                        <Button variant="outline" size="icon" className="h-11 w-11 min-h-[44px] min-w-[44px] border-slate-200 bg-white shadow-sm active:scale-95" onClick={() => setViewingInvoice(booking)} title="Invoice">
+                          <Receipt className="w-5 h-5 text-slate-600" />
+                        </Button>
+                        <Button variant="outline" size="icon" className="h-11 w-11 min-h-[44px] min-w-[44px] border-slate-200 bg-white shadow-sm active:scale-95 text-primary" onClick={() => setEditingBooking(booking)} title="Edit">
+                          <Pencil className="w-5 h-5" />
+                        </Button>
+                        <Button variant="outline" size="icon" className="h-11 w-11 min-h-[44px] min-w-[44px] border-slate-200 bg-white shadow-sm active:scale-95 text-red-600" onClick={() => setDeletingId(booking.id)} title="Delete">
+                          <Trash2 className="w-5 h-5" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Desktop table (lg and up) */}
+          <div className="hidden lg:block overflow-x-auto touch-pan-x">
+            <div className="min-w-0">
             <Table>
               <TableHeader className="bg-slate-50">
                 <TableRow>
@@ -162,6 +235,11 @@ export default function Bookings() {
                           <TableCell className="whitespace-nowrap px-4 py-4">
                             <div className="font-medium text-slate-900">{booking.guestName}</div>
                             <div className="text-xs text-slate-500">Room {booking.room?.roomNumber} ({booking.room?.type})</div>
+                            {booking.createdAt && (
+                              <div className="text-xs text-slate-400 mt-0.5">
+                                Booked {format(new Date(booking.createdAt), "MMM d, yyyy 'at' h:mm a")}
+                              </div>
+                            )}
                           </TableCell>
                           <TableCell className="whitespace-nowrap px-4 py-4">
                             <div className="flex items-center gap-2 text-sm">
@@ -237,37 +315,45 @@ export default function Bookings() {
 
         {/* Create Dialog */}
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>New Reservation</DialogTitle>
-              <DialogDescription>
-                Create a new booking. Price is calculated automatically.
-              </DialogDescription>
-            </DialogHeader>
-            <BookingForm 
-              onSuccess={() => setIsCreateOpen(false)} 
-              onCancel={() => setIsCreateOpen(false)}
-            />
+          <DialogContent className="sm:max-w-[500px] max-h-dvh-90 overflow-hidden p-0 gap-0 flex flex-col">
+            <div className="p-6 pb-0 shrink-0">
+              <DialogHeader>
+                <DialogTitle>New Reservation</DialogTitle>
+                <DialogDescription>
+                  Create a new booking. Price is calculated automatically.
+                </DialogDescription>
+              </DialogHeader>
+            </div>
+            <div className="overflow-y-auto min-h-0 flex-1 px-6 pb-6">
+              <BookingForm 
+                onSuccess={() => setIsCreateOpen(false)} 
+                onCancel={() => setIsCreateOpen(false)}
+              />
+            </div>
           </DialogContent>
         </Dialog>
 
         {/* Edit Dialog */}
         <Dialog open={!!editingBooking} onOpenChange={(open: boolean) => !open && setEditingBooking(null)}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Edit Reservation</DialogTitle>
-              <DialogDescription>
-                Update booking details for {editingBooking?.guestName}.
-              </DialogDescription>
-            </DialogHeader>
-            {editingBooking && (
-              <BookingForm 
-                bookingId={editingBooking.id}
-                initialData={editingBooking}
-                onSuccess={() => setEditingBooking(null)} 
-                onCancel={() => setEditingBooking(null)}
-              />
-            )}
+          <DialogContent className="sm:max-w-[500px] max-h-dvh-90 overflow-hidden p-0 gap-0 flex flex-col">
+            <div className="p-6 pb-0 shrink-0">
+              <DialogHeader>
+                <DialogTitle>Edit Reservation</DialogTitle>
+                <DialogDescription>
+                  Update booking details for {editingBooking?.guestName}.
+                </DialogDescription>
+              </DialogHeader>
+            </div>
+            <div className="overflow-y-auto min-h-0 flex-1 px-6 pb-6">
+              {editingBooking && (
+                <BookingForm 
+                  bookingId={editingBooking.id}
+                  initialData={editingBooking}
+                  onSuccess={() => setEditingBooking(null)} 
+                  onCancel={() => setEditingBooking(null)}
+                />
+              )}
+            </div>
           </DialogContent>
         </Dialog>
 
@@ -296,7 +382,6 @@ export default function Bookings() {
           </AlertDialogContent>
         </AlertDialog>
 
-      </main>
     </div>
   );
 }
@@ -311,11 +396,19 @@ function InvoiceDialog({ booking, open, onOpenChange }: { booking: (Booking & { 
 
   const nights = differenceInDays(new Date(booking.checkOut), new Date(booking.checkIn));
   const currency = booking.room?.currency === 'USD' ? '$' : '₭';
+  const denom = booking.room?.currency === "USD" ? 100 : 1;
   const pricePerNight = booking.room?.currency === 'USD' ? booking.room.price / 100 : booking.room.price;
-  const subtotal = booking.totalPrice / (booking.room?.currency === 'USD' ? 100 : 1);
+  // booking.totalPrice is stored after discount (before tax)
+  const discount = (booking.discountAmount || 0) / denom;
+  const subtotalAfterDiscount = booking.totalPrice / denom;
+  const subtotalBeforeDiscount = subtotalAfterDiscount + discount;
+  const discountPercent =
+    discount > 0 && subtotalBeforeDiscount > 0
+      ? Math.round((discount / subtotalBeforeDiscount) * 100)
+      : 0;
   const taxRate = settings?.taxRate || 0;
-  const taxAmount = (subtotal * taxRate) / 100;
-  const totalWithTax = subtotal + taxAmount;
+  const taxAmount = (subtotalAfterDiscount * taxRate) / 100;
+  const totalWithTax = subtotalAfterDiscount + taxAmount;
   const invoiceNumber = booking.invoiceNumber || `INV-${booking.id.toString().padStart(6, '0')}`;
 
   const handlePrint = () => {
@@ -357,9 +450,14 @@ function InvoiceDialog({ booking, open, onOpenChange }: { booking: (Booking & { 
       .status-badge { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; margin-top: 8px; }
       .status-paid { background-color: #2563eb; color: #ffffff; }
       .status-unpaid { border: 1px solid #e2e8f0; color: #64748b; }
+      .toolbar { position: sticky; top: 0; display: flex; gap: 8px; justify-content: flex-end; padding: 12px 0; background: #fff; }
+      .toolbar button { appearance: none; border: 1px solid #e2e8f0; background: #0f172a; color: #fff; font-weight: 700; font-size: 12px; padding: 8px 12px; border-radius: 999px; cursor: pointer; }
+      .toolbar button.secondary { background: #fff; color: #0f172a; }
+      @media print { .toolbar { display: none; } }
     `);
     windowPrint.document.write('</style></head><body>');
     windowPrint.document.write('<div class="print-container">');
+    windowPrint.document.write('<div class="toolbar"><button class="secondary" onclick="window.close()">Close</button><button onclick="window.print()">Print</button></div>');
     windowPrint.document.write(`
       <div class="header">
         <div class="logo-section">
@@ -416,16 +514,34 @@ function InvoiceDialog({ booking, open, onOpenChange }: { booking: (Booking & { 
             </td>
             <td style="text-align: center;">${nights}</td>
             <td style="text-align: right;">${currency}${pricePerNight.toLocaleString()}</td>
-            <td style="text-align: right; font-weight: 700;">${currency}${subtotal.toLocaleString()}</td>
+            <td style="text-align: right; font-weight: 700;">${currency}${subtotalBeforeDiscount.toLocaleString()}</td>
           </tr>
+          ${discount > 0 ? `
+          <tr>
+            <td>
+              <p style="margin: 0; font-weight: 600;">Discount${discountPercent > 0 ? ` (${discountPercent}%)` : ''}</p>
+            </td>
+            <td style="text-align: center;">-</td>
+            <td style="text-align: right;">-</td>
+            <td style="text-align: right; font-weight: 700;">-${currency}${discount.toLocaleString()}</td>
+          </tr>` : ``}
         </tbody>
       </table>
 
       <div class="totals">
         <div class="total-row">
           <span style="color: #64748b;">Subtotal:</span>
-          <span>${currency}${subtotal.toLocaleString()}</span>
+          <span>${currency}${subtotalBeforeDiscount.toLocaleString()}</span>
         </div>
+        ${discount > 0 ? `
+        <div class="total-row">
+          <span style="color: #64748b;">Discount${discountPercent > 0 ? ` (${discountPercent}%)` : ''}:</span>
+          <span>-${currency}${discount.toLocaleString()}</span>
+        </div>
+        <div class="total-row">
+          <span style="color: #64748b;">Subtotal after discount:</span>
+          <span>${currency}${subtotalAfterDiscount.toLocaleString()}</span>
+        </div>` : ``}
         <div class="total-row">
           <span style="color: #64748b;">Tax (${taxRate}%):</span>
           <span>${currency}${taxAmount.toLocaleString()}</span>
@@ -444,20 +560,67 @@ function InvoiceDialog({ booking, open, onOpenChange }: { booking: (Booking & { 
     windowPrint.document.write('</div></body></html>');
     windowPrint.document.close();
     windowPrint.focus();
-    setTimeout(() => {
-      windowPrint.print();
-      windowPrint.close();
-    }, 250);
+  };
+
+  const handlePrintSmallReceipt = () => {
+    const win = window.open('', '', 'width=340,height=600');
+    if (!win) return;
+    const hotelName = (settings?.hotelName || 'Sunin Hotel').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const guestName = booking.guestName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    win.document.write(`
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Receipt</title>
+<style>
+  @media print {
+    @page { size: 80mm auto; margin: 2mm; }
+    body { margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  body { font-family: monospace; font-size: 12px; line-height: 1.35; color: #000; padding: 8px; max-width: 72mm; margin: 0 auto; }
+  .toolbar { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 8px; }
+  .toolbar button { appearance: none; border: 1px solid #111; background: #111; color: #fff; font-weight: 700; font-size: 12px; padding: 6px 10px; border-radius: 999px; cursor: pointer; }
+  .toolbar button.secondary { background: #fff; color: #111; }
+  @media print { .toolbar { display: none; } }
+  .center { text-align: center; }
+  .line { border-bottom: 1px dashed #333; margin: 6px 0; }
+  .row { display: flex; justify-content: space-between; gap: 8px; }
+  .bold { font-weight: bold; }
+  .mt { margin-top: 10px; }
+  .mb { margin-bottom: 4px; }
+</style>
+</head><body>
+<div class="toolbar"><button class="secondary" onclick="window.close()">Close</button><button onclick="window.print()">Print</button></div>
+<div class="center bold mb">${hotelName}</div>
+<div class="line"></div>
+<div class="row"><span>Guest:</span><span>${guestName}</span></div>
+<div class="row"><span>Room:</span><span>${booking.room?.roomNumber} (${booking.room?.type || ''})</span></div>
+<div class="row"><span>Check-in:</span><span>${format(new Date(booking.checkIn), 'MMM d, yyyy')}</span></div>
+<div class="row"><span>Check-out:</span><span>${format(new Date(booking.checkOut), 'MMM d, yyyy')}</span></div>
+<div class="row"><span>Nights:</span><span>${nights}</span></div>
+<div class="line"></div>
+${discount > 0 ? `<div class="row"><span>Subtotal:</span><span>${currency}${subtotalBeforeDiscount.toLocaleString()}</span></div>` : ``}
+${discount > 0 ? `<div class="row"><span>Discount${discountPercent > 0 ? ` (${discountPercent}%)` : ``}:</span><span>-${currency}${discount.toLocaleString()}</span></div>` : ``}
+<div class="row bold mt"><span>Total:</span><span>${currency}${totalWithTax.toLocaleString()}</span></div>
+<div class="row"><span>Status:</span><span>${booking.paymentStatus}</span></div>
+<div class="line"></div>
+<div class="center mt">Thank you</div>
+<div class="center">${invoiceNumber}</div>
+</body></html>
+    `);
+    win.document.close();
+    win.focus();
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-dvh-90 overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Invoice / Receipt</DialogTitle>
         </DialogHeader>
 
         <div className="flex justify-end gap-2 mb-4">
+          <Button variant="outline" size="sm" onClick={handlePrintSmallReceipt}>
+            <Receipt className="w-4 h-4 mr-2" /> Print small receipt
+          </Button>
           <Button variant="outline" size="sm" onClick={handlePrint}>
             <Printer className="w-4 h-4 mr-2" /> Print
           </Button>
@@ -501,6 +664,9 @@ function InvoiceDialog({ booking, open, onOpenChange }: { booking: (Booking & { 
               <p className="text-sm"><span className="font-medium">Room:</span> {booking.room?.roomNumber}</p>
               <p className="text-sm"><span className="font-medium">Type:</span> {booking.room?.type}</p>
               <p className="text-sm"><span className="font-medium">Stay:</span> {format(new Date(booking.checkIn), 'MMM d')} - {format(new Date(booking.checkOut), 'MMM d, yyyy')}</p>
+              {booking.createdAt && (
+                <p className="text-sm"><span className="font-medium">Booked:</span> {format(new Date(booking.createdAt), "MMM d, yyyy 'at' h:mm a")}</p>
+              )}
             </div>
           </div>
 
@@ -521,16 +687,44 @@ function InvoiceDialog({ booking, open, onOpenChange }: { booking: (Booking & { 
                 </td>
                 <td className="py-4 text-center text-sm">{nights}</td>
                 <td className="py-4 text-right text-sm">{currency}{pricePerNight.toLocaleString()}</td>
-                <td className="py-4 text-right text-sm font-bold">{currency}{subtotal.toLocaleString()}</td>
+                <td className="py-4 text-right text-sm font-bold">{currency}{subtotalBeforeDiscount.toLocaleString()}</td>
               </tr>
+              {discount > 0 && (
+                <tr>
+                  <td className="py-4">
+                    <p className="font-medium text-sm">
+                      Discount{discountPercent > 0 ? ` (${discountPercent}%)` : ""}
+                    </p>
+                  </td>
+                  <td className="py-4 text-center text-sm">-</td>
+                  <td className="py-4 text-right text-sm">-</td>
+                  <td className="py-4 text-right text-sm font-bold text-slate-700">
+                    -{currency}{discount.toLocaleString()}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
 
           <div className="ml-auto w-full sm:w-64 pt-6 border-t-2 border-slate-900 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-slate-500 font-medium">Subtotal:</span>
-              <span>{currency}{subtotal.toLocaleString()}</span>
+              <span>{currency}{subtotalBeforeDiscount.toLocaleString()}</span>
             </div>
+            {discount > 0 && (
+              <>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500 font-medium">
+                    Discount{discountPercent > 0 ? ` (${discountPercent}%)` : ""}:
+                  </span>
+                  <span>-{currency}{discount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500 font-medium">Subtotal after discount:</span>
+                  <span>{currency}{subtotalAfterDiscount.toLocaleString()}</span>
+                </div>
+              </>
+            )}
             <div className="flex justify-between text-sm">
               <span className="text-slate-500 font-medium">Tax ({taxRate}%):</span>
               <span>{currency}{taxAmount.toLocaleString()}</span>

@@ -1,6 +1,7 @@
 import hotelLogo from "@assets/IMG_2034_1769871171499.JPG";
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   LayoutDashboard, 
   CalendarDays, 
@@ -24,6 +25,7 @@ const links = [
 export function Sidebar() {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { logout } = useAuth();
 
   return (
     <>
@@ -88,7 +90,11 @@ export function Sidebar() {
         </nav>
 
         <div className="p-4 border-t border-slate-800">
-          <button className="flex items-center gap-3 px-3 py-3 w-full rounded-lg text-base lg:text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-colors active:scale-95">
+          <button
+            type="button"
+            onClick={() => logout()}
+            className="flex items-center gap-3 px-3 py-3 w-full rounded-lg text-base lg:text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-colors active:scale-95"
+          >
             <LogOut className="w-5 h-5" />
             Sign Out
           </button>
