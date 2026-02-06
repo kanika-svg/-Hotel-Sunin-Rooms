@@ -2,12 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import type { InsertRoom, UpdateRoomRequest } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { apiUrl } from "@/lib/apiBase";
 
 export function useRooms() {
   return useQuery({
     queryKey: [api.rooms.list.path],
     queryFn: async () => {
-      const res = await fetch(api.rooms.list.path, { credentials: "include" });
+      const res = await fetch(apiUrl(api.rooms.list.path), { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch rooms");
       return api.rooms.list.responses[200].parse(await res.json());
     },
@@ -19,7 +20,7 @@ export function useRoom(id: number) {
     queryKey: [api.rooms.get.path, id],
     enabled: !!id,
     queryFn: async () => {
-      const url = buildUrl(api.rooms.get.path, { id });
+      const url = apiUrl(buildUrl(api.rooms.get.path, { id }));
       const res = await fetch(url, { credentials: "include" });
       if (res.status === 404) return null;
       if (!res.ok) throw new Error("Failed to fetch room");
@@ -34,7 +35,7 @@ export function useCreateRoom() {
 
   return useMutation({
     mutationFn: async (data: InsertRoom) => {
-      const res = await fetch(api.rooms.create.path, {
+      const res = await fetch(apiUrl(api.rooms.create.path), {
         method: api.rooms.create.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -62,7 +63,7 @@ export function useUpdateRoom() {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: { id: number } & UpdateRoomRequest) => {
-      const url = buildUrl(api.rooms.update.path, { id });
+      const url = apiUrl(buildUrl(api.rooms.update.path, { id }));
       const res = await fetch(url, {
         method: api.rooms.update.method,
         headers: { "Content-Type": "application/json" },
@@ -91,7 +92,7 @@ export function useDeleteRoom() {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      const url = buildUrl(api.rooms.delete.path, { id });
+      const url = apiUrl(buildUrl(api.rooms.delete.path, { id }));
       const res = await fetch(url, { method: api.rooms.delete.method, credentials: "include" });
       if (!res.ok) throw new Error("Failed to delete room");
     },

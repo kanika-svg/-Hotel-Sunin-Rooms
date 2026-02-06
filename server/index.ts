@@ -23,6 +23,22 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: false }));
+
+// When frontend is on another origin (e.g. Netlify), set ALLOWED_ORIGIN so API accepts requests with credentials
+const allowedOrigin = process.env.ALLOWED_ORIGIN;
+if (allowedOrigin) {
+  app.use((req, res, next) => {
+    if (req.get("origin") === allowedOrigin) {
+      res.set("Access-Control-Allow-Origin", allowedOrigin);
+      res.set("Access-Control-Allow-Credentials", "true");
+      res.set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+      res.set("Access-Control-Allow-Headers", "Content-Type");
+    }
+    if (req.method === "OPTIONS") return res.sendStatus(204);
+    next();
+  });
+}
+
 app.use(sessionMiddleware);
 
 export function log(message: string, source = "express") {

@@ -10,10 +10,10 @@ export const sessionMiddleware = session({
   name: "hotel_sunin_sid",
   cookie: {
     httpOnly: true,
-    // Only use Secure over HTTPS. On http://localhost the browser won't send the cookie if secure: true.
+    // Secure required for HTTPS. When ALLOWED_ORIGIN is set (cross-origin frontend), use sameSite: "none" so cookies are sent.
     secure: process.env.SESSION_SECURE === "true",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    sameSite: "lax",
+    sameSite: process.env.ALLOWED_ORIGIN ? "none" : "lax",
   },
 });
 

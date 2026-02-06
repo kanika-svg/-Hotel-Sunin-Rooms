@@ -1,0 +1,12 @@
+# Netlify config when frontend is deployed here and API is on Render (or another host).
+# Set VITE_API_URL in Netlify env to your API origin (e.g. https://hotel-sunin-rooms.onrender.com).
+
+[build]
+  command = "npm run build"
+  publish = "dist/public"
+
+# SPA: serve index.html for client-side routes
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

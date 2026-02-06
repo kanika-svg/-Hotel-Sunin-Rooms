@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { apiUrl } from "@/lib/apiBase";
 
 export type AuthUser = { id: number; username: string; displayName?: string };
 
@@ -17,7 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = useCallback(async () => {
     try {
-      const res = await fetch("/api/me", { credentials: "include" });
+      const res = await fetch(apiUrl("/api/me"), { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setUser(data);
@@ -38,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(
     async (username: string, password: string): Promise<{ ok: boolean; error?: string }> => {
       try {
-        const res = await fetch("/api/login", {
+        const res = await fetch(apiUrl("/api/login"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -59,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      await fetch("/api/logout", { method: "POST", credentials: "include" });
+      await fetch(apiUrl("/api/logout"), { method: "POST", credentials: "include" });
     } finally {
       setUser(null);
     }

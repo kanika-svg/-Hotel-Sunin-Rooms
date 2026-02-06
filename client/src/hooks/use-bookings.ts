@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import type { InsertBooking, UpdateBookingRequest } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { apiUrl } from "@/lib/apiBase";
 
 export function useBookings(params?: { search?: string; from?: string; to?: string; roomId?: number }) {
   // Serialize params for query key stability
@@ -10,7 +11,7 @@ export function useBookings(params?: { search?: string; from?: string; to?: stri
   return useQuery({
     queryKey,
     queryFn: async () => {
-      const url = new URL(window.location.origin + api.bookings.list.path);
+      const url = new URL(apiUrl(api.bookings.list.path), window.location.origin);
       if (params) {
         Object.entries(params).forEach(([key, value]) => {
           if (value !== undefined) url.searchParams.append(key, String(value));
@@ -28,7 +29,7 @@ export function useBooking(id: number) {
     queryKey: [api.bookings.get.path, id],
     enabled: !!id,
     queryFn: async () => {
-      const url = buildUrl(api.bookings.get.path, { id });
+      const url = apiUrl(buildUrl(api.bookings.get.path, { id }));
       const res = await fetch(url, { credentials: "include" });
       if (res.status === 404) return null;
       if (!res.ok) throw new Error("Failed to fetch booking");
@@ -43,7 +44,7 @@ export function useCreateBooking() {
 
   return useMutation({
     mutationFn: async (data: InsertBooking) => {
-      const res = await fetch(api.bookings.create.path, {
+      const res = await fetch(apiUrl(api.bookings.create.path), {
         method: api.bookings.create.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -73,7 +74,7 @@ export function useUpdateBooking() {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: { id: number } & UpdateBookingRequest) => {
-      const url = buildUrl(api.bookings.update.path, { id });
+      const url = apiUrl(buildUrl(api.bookings.update.path, { id }));
       const res = await fetch(url, {
         method: api.bookings.update.method,
         headers: { "Content-Type": "application/json" },
@@ -103,7 +104,7 @@ export function useDeleteBooking() {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      const url = buildUrl(api.bookings.delete.path, { id });
+      const url = apiUrl(buildUrl(api.bookings.delete.path, { id }));
       const res = await fetch(url, { method: api.bookings.delete.method, credentials: "include" });
       if (!res.ok) throw new Error("Failed to delete booking");
     },
@@ -122,7 +123,7 @@ export function useDashboardStats() {
   return useQuery({
     queryKey: [api.dashboard.stats.path],
     queryFn: async () => {
-      const res = await fetch(api.dashboard.stats.path, { credentials: "include" });
+      const res = await fetch(apiUrl(api.dashboard.stats.path), { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch stats");
       return api.dashboard.stats.responses[200].parse(await res.json());
     },
