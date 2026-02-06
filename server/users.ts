@@ -15,9 +15,12 @@ type UsersFile = {
   nextId: number;
 };
 
+// Match storage: use /tmp in production when no dir set (Render etc. have read-only project dir)
 const USERS_DIR = process.env.HOTEL_SUNIN_DATA_DIR
   ? process.env.HOTEL_SUNIN_DATA_DIR
-  : path.join(getAppRoot(), ".");
+  : process.env.NODE_ENV === "production"
+    ? "/tmp"
+    : path.join(getAppRoot(), ".");
 const USERS_FILE = path.join(USERS_DIR, "users.json");
 
 const defaultUsersFile = (): UsersFile => ({

@@ -93,13 +93,15 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
+  // Render and other hosts need 0.0.0.0 to detect the service; local dev can stay on 127.0.0.1
+  const host = process.env.HOST ?? (process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1");
   httpServer.once("error", (err: NodeJS.ErrnoException) => {
     if (err.code === "EADDRINUSE") {
       log(`Port ${port} is already in use. Close other copies of Hotel Sunin Rooms and try again.`);
     }
     // Don't exit here; Electron main will timeout on readiness and show a friendly dialog.
   });
-  httpServer.listen(port, "127.0.0.1", () => {
+  httpServer.listen(port, host, () => {
     log(`serving on port ${port}`);
   });
 })();

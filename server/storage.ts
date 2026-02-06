@@ -46,10 +46,13 @@ type DataFile = {
   nextSettingsId: number;
 };
 
+// On Render (and similar hosts) the project dir is read-only at runtime. Use /tmp in production when no dir is set.
 const DATA_FILE =
   process.env.HOTEL_SUNIN_DATA_DIR
     ? path.join(process.env.HOTEL_SUNIN_DATA_DIR, "hotel-sunin-data.json")
-    : path.join(getAppRoot(), "hotel-sunin-data.json");
+    : process.env.NODE_ENV === "production"
+      ? path.join("/tmp", "hotel-sunin-data.json")
+      : path.join(getAppRoot(), "hotel-sunin-data.json");
 
 const defaultData = (): DataFile => ({
   rooms: [],
